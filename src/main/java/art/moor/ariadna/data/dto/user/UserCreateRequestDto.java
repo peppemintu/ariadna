@@ -1,6 +1,6 @@
-package art.moor.ariadna.domain.dto.user;
+package art.moor.ariadna.data.dto.user;
 
-import art.moor.ariadna.domain.model.UserRole;
+import art.moor.ariadna.data.model.UserRole;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -11,4 +11,4 @@ public record UserCreateRequestDto(
         @NotBlank @Size(min = 8, max = 72) String password,
         @NotBlank @Size(max = 100) String name,
         @NotNull UserRole role
-        ) {}
+) {}

@@ -1,7 +1,12 @@
-package art.moor.ariadna.domain.model;
+package art.moor.ariadna.data.model;
 
 public enum ActionType {
-    COLUMN_CREATED, COLUMN_UPDATED, COLUMN_DELETED,
-    CARD_CREATED, CARD_UPDATED, CARD_DELETED,
-    CARD_MOVED, CARD_ASSIGNED
+    COLUMN_CREATED,
+    COLUMN_UPDATED,
+    COLUMN_DELETED,
+    CARD_CREATED,
+    CARD_UPDATED,
+    CARD_DELETED,
+    CARD_MOVED,
+    CARD_ASSIGNED,
 }

@@ -1,4 +1,4 @@
-package art.moor.ariadna.domain.dto.board;
+package art.moor.ariadna.data.dto.board;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;

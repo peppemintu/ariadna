@@ -1,4 +1,4 @@
-package art.moor.ariadna.domain.model;
+package art.moor.ariadna.data.model;
 
 import jakarta.persistence.*;
 import lombok.*;
@@ -20,6 +20,7 @@ import java.util.UUID;
 @Setter
 @EqualsAndHashCode(of = {"id"})
 public class Board {
+
     @Id
     @UuidGenerator(style = UuidGenerator.Style.VERSION_7)
     @Column(updatable = false, nullable = false)
@@ -42,4 +43,5 @@ public class Board {
             orphanRemoval = true
     )
     private Set<BoardUser> boardUsers = new HashSet<>();
+
 }

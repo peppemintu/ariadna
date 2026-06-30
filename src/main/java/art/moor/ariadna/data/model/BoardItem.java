@@ -1,9 +1,7 @@
-package art.moor.ariadna.domain.model;
+package art.moor.ariadna.data.model;
 
 import jakarta.persistence.*;
-import lombok.EqualsAndHashCode;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 import org.hibernate.annotations.UuidGenerator;
@@ -13,12 +11,15 @@ import java.util.UUID;
 
 @Entity
 @Table(name = "board_item")
+@AllArgsConstructor
+@NoArgsConstructor
 @Inheritance(strategy = InheritanceType.JOINED)
 @DiscriminatorColumn(name = "item_type", discriminatorType = DiscriminatorType.STRING)
 @Getter
 @Setter
 @EqualsAndHashCode(of = {"id"})
 public abstract class BoardItem {
+
     @Id
     @UuidGenerator(style = UuidGenerator.Style.VERSION_7)
     @Column(updatable = false, nullable = false)
@@ -45,4 +46,5 @@ public abstract class BoardItem {
     @UpdateTimestamp
     @Column(name = "updated_at", nullable = false)
     private Instant updatedAt;
+
 }

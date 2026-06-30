@@ -1,4 +1,4 @@
-package art.moor.ariadna.domain.model;
+package art.moor.ariadna.data.model;
 
 import jakarta.persistence.*;
 import lombok.Getter;
@@ -26,4 +26,5 @@ public class Card extends BoardItem {
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "column_id", nullable = false)
     private BoardColumn column;
+
 }

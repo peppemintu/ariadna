@@ -1,4 +1,4 @@
-package art.moor.ariadna.domain.dto.boardUser;
+package art.moor.ariadna.data.dto.boardUser;
 
 import java.util.UUID;
 

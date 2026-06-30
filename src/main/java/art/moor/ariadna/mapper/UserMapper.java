@@ -1,23 +1,24 @@
 package art.moor.ariadna.mapper;
 
-import art.moor.ariadna.dto.BoardRequestDto;
-import art.moor.ariadna.dto.BoardResponseDto;
-import art.moor.ariadna.model.Board;
+import art.moor.ariadna.data.dto.user.UserCreateRequestDto;
+import art.moor.ariadna.data.dto.user.UserResponseDto;
+import art.moor.ariadna.data.dto.user.UserUpdateRequestDto;
+import art.moor.ariadna.data.model.User;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.MappingTarget;
 
 @Mapper(componentModel = "spring")
-public interface BoardMapper {
-    BoardResponseDto toDto(Board board);
+public interface UserMapper {
+    UserResponseDto toDto(User user);
 
     @Mapping(target = "id", ignore = true)
-    @Mapping(target = "createdAt", ignore = true)
-    @Mapping(target = "updatedAt", ignore = true)
-    Board fromDto(BoardRequestDto dto);
+    @Mapping(target = "passwordHash", ignore = true)
+    User fromCreate(UserCreateRequestDto dto);
 
     @Mapping(target = "id", ignore = true)
-    @Mapping(target = "createdAt", ignore = true)
-    @Mapping(target = "updatedAt", ignore = true)
-    void updateEntity(BoardRequestDto dto, @MappingTarget Board board);
+    @Mapping(target = "email", ignore = true)
+    @Mapping(target = "passwordHash", ignore = true)
+    @Mapping(target = "role", ignore = true)
+    void updateEntity(UserUpdateRequestDto dto, @MappingTarget User user);
 }

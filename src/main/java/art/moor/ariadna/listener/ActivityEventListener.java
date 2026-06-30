@@ -1,4 +1,4 @@
-package art.moor.ariadna.config;
+package art.moor.ariadna.listener;
 
 import art.moor.ariadna.data.event.ActivityEvent;
 import art.moor.ariadna.data.model.Activity;
@@ -7,7 +7,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.event.TransactionPhase;
 import org.springframework.transaction.event.TransactionalEventListener;
 
 @Component
@@ -18,7 +17,7 @@ public class ActivityEventListener {
     private final ActivityRepository activityRepository;
 
     @Async
-    @TransactionalEventListener(phase = TransactionPhase.BEFORE_COMMIT)
+    @TransactionalEventListener
     public void handle(ActivityEvent event) {
         try {
             Activity activity = new Activity();
@@ -33,4 +32,5 @@ public class ActivityEventListener {
                     event.actionType(), event.boardId(), e);
         }
     }
+
 }

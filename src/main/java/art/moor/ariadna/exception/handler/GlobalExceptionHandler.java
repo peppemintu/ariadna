@@ -1,5 +1,6 @@
-package art.moor.ariadna.exception;
+package art.moor.ariadna.exception.handler;
 
+import art.moor.ariadna.exception.ResourceNotFoundException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.http.HttpStatus;

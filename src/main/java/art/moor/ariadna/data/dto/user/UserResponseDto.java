@@ -1,6 +1,6 @@
-package art.moor.ariadna.domain.dto.user;
+package art.moor.ariadna.data.dto.user;
 
-import art.moor.ariadna.domain.model.UserRole;
+import art.moor.ariadna.data.model.UserRole;
 
 import java.util.UUID;
 

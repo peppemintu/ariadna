@@ -1,4 +1,4 @@
-package art.moor.ariadna.domain.dto.user;
+package art.moor.ariadna.data.dto.user;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;

@@ -1,4 +1,4 @@
-package art.moor.ariadna.domain.model;
+package art.moor.ariadna.data.model;
 
 import jakarta.persistence.*;
 import lombok.*;
@@ -15,6 +15,7 @@ import java.util.UUID;
 @Setter
 @EqualsAndHashCode(of = {"id"})
 public class BoardUser {
+
     @Id
     @UuidGenerator(style = UuidGenerator.Style.VERSION_7)
     private UUID id;
@@ -26,4 +27,5 @@ public class BoardUser {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
+
 }

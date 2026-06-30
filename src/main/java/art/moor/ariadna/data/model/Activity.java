@@ -1,7 +1,9 @@
-package art.moor.ariadna.domain.model;
+package art.moor.ariadna.data.model;
 
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.JdbcTypeCode;
@@ -16,6 +18,8 @@ import java.util.UUID;
 @Table(name = "activity")
 @Getter
 @Setter
+@AllArgsConstructor
+@NoArgsConstructor
 public class Activity {
 
     @Id
@@ -43,4 +47,5 @@ public class Activity {
     @CreationTimestamp
     @Column(name = "created_at", updatable = false, nullable = false)
     private Instant createdAt;
+
 }

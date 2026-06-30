@@ -1,4 +1,4 @@
-package art.moor.ariadna.data.dto;
+package art.moor.ariadna.data.dto.activity;
 
 import java.time.Instant;
 import java.util.Map;

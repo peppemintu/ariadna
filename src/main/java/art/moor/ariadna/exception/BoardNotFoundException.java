@@ -1,4 +1,9 @@
 package art.moor.ariadna.exception;
 
-public class BoardNotFoundException {
+import java.util.UUID;
+
+public class BoardNotFoundException extends ResourceNotFoundException {
+    public BoardNotFoundException(UUID id) {
+        super("Board not found: " + id);
+    }
 }

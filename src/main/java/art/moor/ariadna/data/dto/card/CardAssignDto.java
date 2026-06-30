@@ -1,4 +1,4 @@
-package art.moor.ariadna.domain.dto.card;
+package art.moor.ariadna.data.dto.card;
 
 import java.util.UUID;
 

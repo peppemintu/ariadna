@@ -1,4 +1,11 @@
 package art.moor.ariadna.repo;
 
-public interface UserRepository {
+import art.moor.ariadna.data.model.User;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+
+import java.util.UUID;
+
+@Repository
+public interface UserRepository extends JpaRepository<User, UUID> {
 }

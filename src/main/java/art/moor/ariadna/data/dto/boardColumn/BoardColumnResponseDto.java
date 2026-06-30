@@ -1,4 +1,4 @@
-package art.moor.ariadna.domain.dto.boardColumn;
+package art.moor.ariadna.data.dto.boardColumn;
 
 import java.time.Instant;
 import java.util.UUID;

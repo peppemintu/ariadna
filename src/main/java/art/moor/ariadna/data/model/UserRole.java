@@ -1,6 +1,6 @@
-package art.moor.ariadna.domain.model;
+package art.moor.ariadna.data.model;
 
 public enum UserRole {
     ADMIN,
-    USER
+    USER,
 }
