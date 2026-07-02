@@ -26,7 +26,7 @@ import java.util.UUID;
 @Transactional
 public class BoardColumnService {
 
-    private static final double POSITION_STEP = 1.0;
+    private static final double POSITION_STEP = 1000.0;
 
     private final BoardColumnRepository boardColumnRepository;
     private final BoardRepository boardRepository;

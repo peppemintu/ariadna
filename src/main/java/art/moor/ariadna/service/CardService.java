@@ -30,7 +30,7 @@ import java.util.UUID;
 @Transactional
 public class CardService {
 
-    private static final double POSITION_STEP = 1.0;
+    static final double POSITION_STEP = 1000.0;
 
     private final CardRepository cardRepository;
     private final BoardColumnRepository boardColumnRepository;
@@ -210,7 +210,10 @@ public class CardService {
     private double computePosition(UUID targetColumnId, UUID prevCardId, UUID nextCardId) {
         Double prev = prevCardId == null ? null : getCardInColumn(prevCardId, targetColumnId).getPosition();
         Double next = nextCardId == null ? null : getCardInColumn(nextCardId, targetColumnId).getPosition();
+        return midpoint(prev, next);
+    }
 
+    static double midpoint(Double prev, Double next) {
         if (prev != null && next != null) return (prev + next) / 2.0;
         if (prev == null && next != null) return next / 2.0;
         if (prev != null) return prev + POSITION_STEP;
@@ -224,4 +227,5 @@ public class CardService {
         }
         return card;
     }
+
 }
