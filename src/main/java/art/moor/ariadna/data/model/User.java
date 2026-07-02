@@ -33,6 +33,7 @@ public class User {
     private String name;
 
     @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
     private UserRole role;
 
     @OneToMany(
