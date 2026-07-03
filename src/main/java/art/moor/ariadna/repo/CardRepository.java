@@ -12,6 +12,8 @@ import java.util.UUID;
 public interface CardRepository extends JpaRepository<Card, UUID> {
     List<Card> findByColumnIdOrderByPositionAscIdAsc(UUID columnId);
 
+    List<Card> findByBoardIdOrderByPositionAscIdAsc(UUID boardId);
+
     @Query("SELECT MAX(c.position) FROM Card c WHERE c.column.id = :columnId")
     Optional<Double> findMaxPositionByColumnId(@Param("columnId") UUID columnId);
 }

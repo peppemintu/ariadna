@@ -1,5 +1,6 @@
 package art.moor.ariadna.controller;
 
+import art.moor.ariadna.data.dto.board.BoardFullDto;
 import art.moor.ariadna.data.dto.board.BoardRequestDto;
 import art.moor.ariadna.data.dto.board.BoardResponseDto;
 import art.moor.ariadna.service.BoardService;
@@ -33,6 +34,11 @@ public class BoardController {
     @GetMapping("/{id}")
     public BoardResponseDto getById(@PathVariable UUID id) {
         return boardService.getById(id);
+    }
+
+    @GetMapping("/{id}/full")
+    public BoardFullDto getFullBoardById(@PathVariable UUID id) {
+        return boardService.getFullBoardById(id);
     }
 
     @GetMapping

@@ -3,10 +3,14 @@ package art.moor.ariadna.mapper;
 import art.moor.ariadna.data.dto.boardColumn.BoardColumnCreateDto;
 import art.moor.ariadna.data.dto.boardColumn.BoardColumnResponseDto;
 import art.moor.ariadna.data.dto.boardColumn.BoardColumnUpdateDto;
+import art.moor.ariadna.data.dto.boardColumn.BoardColumnWithCardsDto;
+import art.moor.ariadna.data.dto.card.CardResponseDto;
 import art.moor.ariadna.data.model.BoardColumn;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.MappingTarget;
+
+import java.util.List;
 
 @Mapper(componentModel = "spring")
 public interface BoardColumnMapper {
@@ -31,4 +35,8 @@ public interface BoardColumnMapper {
     @Mapping(target = "updatedAt", ignore = true)
     @Mapping(target = "color",     defaultValue = "#252525")
     void updateEntity(BoardColumnUpdateDto dto, @MappingTarget BoardColumn column);
+
+    @Mapping(source = "column.board.id", target = "boardId")
+    @Mapping(source = "cards", target = "cards")
+    BoardColumnWithCardsDto toDto(BoardColumn column, List<CardResponseDto> cards);
 }
