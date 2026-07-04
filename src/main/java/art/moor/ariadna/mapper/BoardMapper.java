@@ -26,7 +26,6 @@ public interface BoardMapper {
     @Mapping(target = "updatedAt", ignore = true)
     void updateEntity(BoardRequestDto dto, @MappingTarget Board board);
 
-    @Mapping(target = "boardMembers", ignore = true)
     @Mapping(source = "members", target = "members")
     @Mapping(source = "columns", target = "columns")
     BoardFullDto toFullBoard(Board board, List<UserResponseDto> members, List<BoardColumnWithCardsDto> columns);
