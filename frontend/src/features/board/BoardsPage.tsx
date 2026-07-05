@@ -1,27 +1,21 @@
-// Board chooser. "All boards" lists everything; "My boards" is scoped to the
-// current user's memberships (boardUser links). Create a board inline; rename
-// yourself from the header (the backend's user-update endpoint).
+// Board chooser. Shows only the boards the current user is a member of.
+// Creating a board also makes the creator a member (see useCreateBoard).
+// Rename yourself from the header (the backend's user-update endpoint).
 
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useBoards, useMyBoards } from "@/hooks/queries";
+import { useMyBoards } from "@/hooks/queries";
 import { useCreateBoard, useRenameUser } from "@/hooks/mutations";
 import { useCurrentUser } from "@/lib/currentUser";
-import { Avatar, Button, Dialog, Input, Tabs, useToast } from "@/ui";
+import { Avatar, Button, Dialog, Input, useToast } from "@/ui";
 import styles from "./BoardsPage.module.css";
-
-type Scope = "all" | "my";
 
 export function BoardsPage() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { user, setUser } = useCurrentUser();
 
-  const [scope, setScope] = useState<Scope>("all");
-  const allQ = useBoards();
-  const myQ = useMyBoards(user?.id, scope === "my");
-  const q = scope === "all" ? allQ : myQ;
-  const boards = q.data;
+  const { data: boards, isLoading, isError, error } = useMyBoards(user?.id);
 
   // --- create board ---
   const createBoard = useCreateBoard();
@@ -30,9 +24,9 @@ export function BoardsPage() {
 
   const handleCreate = async () => {
     const t = newTitle.trim();
-    if (!t) return;
+    if (!t || !user) return;
     try {
-      const created = await createBoard.mutateAsync(t);
+      const created = await createBoard.mutateAsync({ title: t, userId: user.id });
       toast({ title: "Board created", tone: "success" });
       setCreateOpen(false);
       setNewTitle("");
@@ -82,11 +76,6 @@ export function BoardsPage() {
     navigate("/login", { replace: true });
   };
 
-  const emptyCopy =
-    scope === "all"
-      ? "No boards yet — create the first one."
-      : "You're not a member of any board yet. Open a board and add yourself via Members.";
-
   return (
     <main className={styles.page}>
       <header className={styles.top}>
@@ -102,21 +91,10 @@ export function BoardsPage() {
         </div>
       </header>
 
-      <div className={styles.scopeRow}>
-        <Tabs
-          value={scope}
-          onChange={(v) => setScope(v as Scope)}
-          tabs={[
-            { value: "all", label: "All boards" },
-            { value: "my", label: "My boards" },
-          ]}
-        />
-      </div>
-
-      {q.isLoading && <p className={styles.note}>Loading boards…</p>}
-      {q.isError && (
+      {isLoading && <p className={styles.note}>Loading boards…</p>}
+      {isError && (
         <p className={styles.error}>
-          Can't load boards{q.error instanceof Error ? ` — ${q.error.message}` : ""}.
+          Can't load boards{error instanceof Error ? ` — ${error.message}` : ""}.
         </p>
       )}
 
@@ -139,7 +117,9 @@ export function BoardsPage() {
           ))}
         </ul>
       )}
-      {boards && boards.length === 0 && <p className={styles.note}>{emptyCopy}</p>}
+      {boards && boards.length === 0 && (
+        <p className={styles.note}>No boards yet — create your first one.</p>
+      )}
 
       <Dialog
         open={createOpen}

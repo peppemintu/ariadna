@@ -19,11 +19,13 @@ public interface BoardMapper {
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "createdAt", ignore = true)
     @Mapping(target = "updatedAt", ignore = true)
+    @Mapping(target = "boardUsers", ignore = true)
     Board fromDto(BoardRequestDto dto);
 
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "createdAt", ignore = true)
     @Mapping(target = "updatedAt", ignore = true)
+    @Mapping(target = "boardUsers", ignore = true)
     void updateEntity(BoardRequestDto dto, @MappingTarget Board board);
 
     @Mapping(source = "members", target = "members")

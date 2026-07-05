@@ -155,10 +155,27 @@ export function useDeleteColumn(boardId: UUID) {
 // Board mutations are NOT broadcast over WS (no BOARD_* action types), so other
 // clients only learn about them on their next refetch.
 
+/**
+ * Create a board and make the creator its first member — the backend has no
+ * auth, so "creator" is just the current user passed from the client, added in
+ * a second call. If that membership call fails, we roll back the now-orphaned
+ * board (with no "all boards" view it would otherwise vanish from sight).
+ * A backend that did both in one transaction would be cleaner; see the note in
+ * the chat.
+ */
 export function useCreateBoard() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (title: string) => boardsApi.create({ title }),
+    mutationFn: async ({ title, userId }: { title: string; userId: UUID }) => {
+      const board = await boardsApi.create({ title });
+      try {
+        await boardUsersApi.add(board.id, userId);
+      } catch (err) {
+        await boardsApi.remove(board.id).catch(() => {});
+        throw err;
+      }
+      return board;
+    },
     // Prefix ["boards"] catches both the full list and per-user lists.
     onSuccess: () => qc.invalidateQueries({ queryKey: qk.boards }),
   });

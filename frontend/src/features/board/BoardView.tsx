@@ -10,7 +10,7 @@ import { useBoardRealtime } from "@/hooks/useBoardRealtime";
 import { useCreateCard, useCreateColumn, useMoveCard } from "@/hooks/mutations";
 import { ApiError } from "@/api/http";
 import { Button, Tabs, useToast } from "@/ui";
-import type { CardResponse, ColumnWithCards, UserResponse, UUID } from "@/api/types";
+import type { CardCreate, CardResponse, ColumnWithCards, UserResponse, UUID } from "@/api/types";
 import { BoardHeader } from "./BoardHeader";
 import { Column } from "./Column";
 import { TaskCard } from "./TaskCard";
@@ -101,8 +101,8 @@ export function BoardView() {
     [board, selectedCardId],
   );
 
-  const onCreateCard = (columnId: UUID, title: string) =>
-    createCard.mutate({ columnId, body: { title } });
+  const onCreateCard = (columnId: UUID, body: CardCreate) =>
+    createCard.mutate({ columnId, body });
 
   const onCreateColumn = (title: string, color: string) =>
     createColumn.mutate(
@@ -167,6 +167,7 @@ export function BoardView() {
                   key={col.id}
                   column={col}
                   membersById={membersById}
+                  members={board.members}
                   onCardClick={onCardClick}
                   onCreateCard={onCreateCard}
                 />
