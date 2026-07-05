@@ -1,0 +1,68 @@
+.page {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: var(--space-6);
+  background: var(--surface-board);
+}
+.panel {
+  width: 100%;
+  max-width: 440px;
+  padding: var(--space-8);
+  background: var(--surface-card);
+  border: var(--border-bold) solid var(--ink-900);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-xl);
+}
+.eyebrow {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+.title {
+  margin-top: var(--space-2);
+  font-family: var(--font-display);
+  font-size: var(--text-3xl);
+  font-weight: var(--fw-bold);
+  letter-spacing: var(--tracking-tight);
+  color: var(--text-strong);
+}
+.sub { margin-top: var(--space-1); color: var(--text-body); font-size: var(--text-sm); }
+.note { margin-top: var(--space-6); color: var(--text-muted); font-size: var(--text-sm); }
+.error { margin-top: var(--space-6); color: var(--flare-700); font-size: var(--text-sm); }
+
+.list {
+  margin-top: var(--space-6);
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+.userBtn {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  width: 100%;
+  padding: 10px 12px;
+  text-align: left;
+  background: var(--paper-0);
+  border: var(--border-line) solid var(--ink-900);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-sm);
+  cursor: pointer;
+  transition: var(--transition-control);
+}
+.userBtn:hover { transform: translate(-2px, -2px); box-shadow: var(--shadow-md); }
+.userBtn:active { transform: var(--press-translate); box-shadow: var(--shadow-press); }
+.userText { display: flex; flex-direction: column; gap: 1px; flex: 1; min-width: 0; }
+.userName { font-family: var(--font-display); font-size: var(--text-md); font-weight: var(--fw-semibold); color: var(--ink-900); }
+.userEmail { font-family: var(--font-mono); font-size: var(--text-2xs); color: var(--ink-300); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.divider {
+  height: 2px;
+  margin: var(--space-6) 0;
+  background: var(--ink-200);
+}
+.form { display: flex; flex-direction: column; gap: var(--space-4); }
+.formActions { display: flex; gap: var(--space-2); }

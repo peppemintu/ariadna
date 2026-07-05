@@ -1,0 +1,388 @@
+/* ============================================================
+   ARIADNA DESIGN TOKENS
+   Ported verbatim from the Ariadna design system bundle.
+   Single source of truth for color, type, spacing, effects, motion.
+   Reach for the SEMANTIC aliases in product code, not raw ramps.
+   Fonts come from @fontsource (see main.tsx) — no @font-face here.
+   ============================================================ */
+
+/* ============================================================
+   ARIADNA DESIGN SYSTEM — global entry point.
+   Consumers link THIS file only. Imports must stay a flat list;
+   keep all real declarations in the token files below.
+   ============================================================ */
+
+/* Ariadna webfonts.
+   NOTE: Sourced from Google Fonts (no binaries shipped in-repo yet).
+   Space Grotesk  — brutalist grotesque, display + body
+   Space Mono     — monospace, labels / metadata / kanban tags
+   Shantell Sans  — hand-drawn, annotations + accents
+   To localise, drop .woff2 files in /assets/fonts and swap these @imports for @font-face. */
+
+/* cyrillic-ext */
+
+/* cyrillic */
+
+/* vietnamese */
+
+/* latin-ext */
+
+/* latin */
+
+/* cyrillic-ext */
+
+/* cyrillic */
+
+/* vietnamese */
+
+/* latin-ext */
+
+/* latin */
+
+/* cyrillic-ext */
+
+/* cyrillic */
+
+/* vietnamese */
+
+/* latin-ext */
+
+/* latin */
+
+/* cyrillic-ext */
+
+/* cyrillic */
+
+/* vietnamese */
+
+/* latin-ext */
+
+/* latin */
+
+/* cyrillic-ext */
+
+/* cyrillic */
+
+/* vietnamese */
+
+/* latin-ext */
+
+/* latin */
+
+/* vietnamese */
+
+/* latin-ext */
+
+/* latin */
+
+/* vietnamese */
+
+/* latin-ext */
+
+/* latin */
+
+/* vietnamese */
+
+/* latin-ext */
+
+/* latin */
+
+/* vietnamese */
+
+/* latin-ext */
+
+/* latin */
+
+/* vietnamese */
+
+/* latin-ext */
+
+/* latin */
+
+/* vietnamese */
+
+/* latin-ext */
+
+/* latin */
+
+/* vietnamese */
+
+/* latin-ext */
+
+/* latin */
+
+/* ============================================================
+   ARIADNA — COLOR TOKENS
+   The brand runs on 4 raw colors. Everything else is a tint/shade
+   derived from them. Brutalism = flat fills, no gradients.
+   ============================================================ */
+
+:root {
+  /* ---- Raw brand colors ---- */
+  --ink:        #041425;  /* near-black navy — text, borders, shadows */
+  --paper:      #f1f8ff;  /* alice white — page + surfaces */
+  --signal:     #0076f5;  /* action blue — primary CTAs, links, focus */
+  --flare:      #e73c04;  /* orange-red — alerts, highlights, accents */
+
+  /* ---- Ink ramp (cool navy neutrals, derived from --ink) ---- */
+  --ink-900:    #041425;
+  --ink-700:    #0d2b45;
+  --ink-500:    #2c4a66;
+  --ink-300:    #6b8299;
+  --ink-200:    #9fb2c4;
+  --ink-100:    #c7d4e0;
+
+  /* ---- Paper ramp (warm-cool whites for layering) ---- */
+  --paper-0:    #ffffff;  /* pure white — raised cards on paper */
+  --paper-50:   #f1f8ff;  /* default page */
+  --paper-100:  #e3eefb;  /* sunken wells, board background */
+  --paper-200:  #d2e2f4;  /* dividers, muted fills */
+
+  /* ---- Signal ramp ---- */
+  --signal-700: #0058bd;  /* pressed / hover-dark */
+  --signal-500: #0076f5;
+  --signal-300: #6fb2ff;
+  --signal-100: #d4e8ff;  /* tinted fill / highlight wash */
+
+  /* ---- Flare ramp ---- */
+  --flare-700:  #b62d02;  /* pressed / hover-dark */
+  --flare-500:  #e73c04;
+  --flare-300:  #ff8456;
+  --flare-100:  #ffe0d3;  /* tinted fill / highlight wash */
+
+  /* ---- Extended status (kept minimal, derived in-key) ---- */
+  --go-500:     #1f9d57;  /* "done" green — kanban column accent */
+  --go-100:     #d6f2e1;
+  --hold-500:   #e8a400;  /* "blocked / waiting" amber */
+  --hold-100:   #fdeecb;
+
+  /* ============================================================
+     SEMANTIC ALIASES — reach for these in product code
+     ============================================================ */
+
+  /* Surfaces */
+  --surface-page:     var(--paper-50);
+  --surface-board:    var(--paper-100);
+  --surface-card:     var(--paper-0);
+  --surface-sunken:   var(--paper-100);
+  --surface-inverse:  var(--ink-900);
+
+  /* Text */
+  --text-strong:      var(--ink-900);
+  --text-body:        var(--ink-700);
+  --text-muted:       var(--ink-300);
+  --text-on-ink:      var(--paper-50);
+  --text-on-signal:   var(--paper-0);
+  --text-link:        var(--signal-500);
+
+  /* Lines & structure */
+  --border-ink:       var(--ink-900);   /* the signature thick black line */
+  --border-soft:      var(--ink-100);
+  --divider:          var(--paper-200);
+
+  /* Interactive */
+  --action:           var(--signal-500);
+  --action-hover:     var(--signal-700);
+  --accent:           var(--flare-500);
+  --accent-hover:     var(--flare-700);
+  --focus-ring:       var(--signal-500);
+
+  /* Feedback */
+  --danger:           var(--flare-500);
+  --success:          var(--go-500);
+  --warning:          var(--hold-500);
+
+  /* Highlight wash (marker-pen feel) */
+  --mark-signal:      var(--signal-100);
+  --mark-flare:       var(--flare-100);
+  --mark-go:          var(--go-100);
+  --mark-hold:        var(--hold-100);
+}
+
+/* ============================================================
+   ARIADNA — TYPOGRAPHY TOKENS
+   Display + body: Space Grotesk (brutalist grotesque)
+   Labels/metadata: Space Mono (uppercase, tracked-out)
+   Accents/annotations: Shantell Sans (hand-drawn)
+   ============================================================ */
+
+:root {
+  /* ---- Families ---- */
+  --font-display: 'Space Grotesk', 'Segoe UI', system-ui, sans-serif;
+  --font-body:    'Space Grotesk', 'Segoe UI', system-ui, sans-serif;
+  --font-mono:    'Space Mono', ui-monospace, 'SFMono-Regular', monospace;
+  --font-hand:    'Shantell Sans', 'Comic Sans MS', cursive;
+
+  /* ---- Weights ---- */
+  --fw-regular:   400;  /* @kind other */
+  --fw-medium:    500;  /* @kind other */
+  --fw-semibold:  600;  /* @kind other */
+  --fw-bold:      700;  /* @kind other */
+
+  /* ---- Type scale (1.25 major-third, base 16px) ---- */
+  --text-2xs:     11px;
+  --text-xs:      12px;
+  --text-sm:      14px;
+  --text-base:    16px;
+  --text-md:      18px;
+  --text-lg:      22px;
+  --text-xl:      28px;
+  --text-2xl:     36px;
+  --text-3xl:     46px;
+  --text-4xl:     60px;
+  --text-5xl:     78px;
+
+  /* ---- Line heights ---- */
+  --leading-tight:   1.05;  /* display headlines @kind other */
+  --leading-snug:    1.25;  /* sub-heads @kind other */
+  --leading-normal:  1.5;   /* body copy @kind other */
+
+  /* ---- Tracking ---- */
+  --tracking-tight:  -0.02em;  /* big display @kind other */
+  --tracking-normal: 0;        /* @kind other */
+  --tracking-label:  0.08em;   /* uppercase mono labels @kind other */
+
+  /* ============================================================
+     SEMANTIC TYPE ALIASES
+     ============================================================ */
+  --type-display-size:   var(--text-4xl);
+  --type-display-weight: var(--fw-bold);
+  --type-display-leading:var(--leading-tight);
+  --type-display-track:  var(--tracking-tight);
+
+  --type-heading-size:   var(--text-2xl);
+  --type-heading-weight: var(--fw-bold);
+
+  --type-title-size:     var(--text-lg);
+  --type-title-weight:   var(--fw-semibold);
+
+  --type-body-size:      var(--text-base);
+  --type-body-weight:    var(--fw-regular);
+  --type-body-leading:   var(--leading-normal);
+
+  --type-label-size:     var(--text-xs);
+  --type-label-weight:   var(--fw-bold);
+  --type-label-track:    var(--tracking-label);
+
+  --type-hand-size:      var(--text-md);
+}
+
+/* ============================================================
+   ARIADNA — SPACING & SIZING TOKENS
+   4px base grid. Brutalism likes generous, deliberate gaps.
+   ============================================================ */
+
+:root {
+  --space-0:   0;
+  --space-1:   4px;
+  --space-2:   8px;
+  --space-3:   12px;
+  --space-4:   16px;
+  --space-5:   20px;
+  --space-6:   24px;
+  --space-8:   32px;
+  --space-10:  40px;
+  --space-12:  48px;
+  --space-16:  64px;
+  --space-20:  80px;
+  --space-24:  96px;
+
+  /* Semantic spacing */
+  --gap-inline:   var(--space-2);   /* between inline siblings (icon+label) */
+  --gap-stack:    var(--space-3);    /* between stacked form rows */
+  --pad-control:  var(--space-3);    /* button / input inner padding */
+  --pad-card:     var(--space-5);    /* card inner padding */
+  --gap-column:   var(--space-4);    /* kanban card gap */
+
+  /* Layout widths */
+  --width-content: 1200px;
+  --width-prose:   680px;
+  --width-sidebar: 248px;
+  --width-column:  300px;   /* kanban column */
+
+  /* Control heights */
+  --control-sm: 32px;
+  --control-md: 40px;
+  --control-lg: 48px;
+}
+
+/* ============================================================
+   ARIADNA — EFFECTS: borders, radii, shadows
+   The signature look: thick ink borders + HARD offset shadows
+   (zero blur). Hand-drawn touch via slightly asymmetric radii.
+   ============================================================ */
+
+:root {
+  /* ---- Border widths ---- */
+  --border-hair:   1px;
+  --border-line:   2px;   /* default brutalist line */
+  --border-bold:   3px;   /* emphasis / focus */
+
+  /* ---- Composed borders ---- */
+  --stroke:        var(--border-line) solid var(--border-ink);
+  --stroke-bold:   var(--border-bold) solid var(--border-ink);
+  --stroke-soft:   var(--border-hair) solid var(--border-soft);
+
+  /* ---- Radii ----
+     Near-square. The "hand" radii are intentionally asymmetric so
+     boxes read as drawn-by-hand rather than machine-perfect. */
+  --radius-0:      0;
+  --radius-sm:     3px;
+  --radius-md:     6px;
+  --radius-lg:     10px;
+  --radius-pill:   999px;
+  --radius-hand:   12px 10px 13px 9px / 9px 13px 10px 12px;  /* wobble */
+  --radius-hand-sm:7px 5px 8px 6px / 6px 8px 5px 7px;
+
+  /* ---- HARD shadows (no blur — the brutalist drop) ----
+     Offset solid ink. Bigger offset = more "lifted". */
+  --shadow-xs:     1px 1px 0 0 var(--ink-900);
+  --shadow-sm:     2px 2px 0 0 var(--ink-900);
+  --shadow-md:     4px 4px 0 0 var(--ink-900);
+  --shadow-lg:     6px 6px 0 0 var(--ink-900);
+  --shadow-xl:     8px 8px 0 0 var(--ink-900);
+
+  /* Colored hard shadows for accent moments */
+  --shadow-signal: 4px 4px 0 0 var(--signal-500);
+  --shadow-flare:  4px 4px 0 0 var(--flare-500);
+
+  /* Pressed state collapses the shadow toward the box */
+  --shadow-press:  1px 1px 0 0 var(--ink-900);
+
+  /* Semantic surface elevation */
+  --elevation-card:   var(--shadow-md);
+  --elevation-raised: var(--shadow-lg);
+  --elevation-modal:  var(--shadow-xl);
+}
+
+/* ============================================================
+   ARIADNA — MOTION TOKENS
+   Snappy and physical. Buttons "stamp" down (translate into their
+   shadow). A touch of overshoot keeps it playful (hand-drawn energy)
+   without being floaty.
+   ============================================================ */
+
+:root {
+  /* ---- Durations ---- */
+  --dur-instant: 80ms;  /* @kind other */
+  --dur-fast:    140ms; /* @kind other */
+  --dur-base:    200ms; /* @kind other */
+  --dur-slow:    320ms; /* @kind other */
+
+  /* ---- Easings ---- */
+  --ease-out:    cubic-bezier(0.2, 0.8, 0.2, 1);     /* @kind other */
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);     /* @kind other */
+  --ease-stamp:  cubic-bezier(0.3, 1.4, 0.5, 1);   /* @kind other */
+  --ease-linear: linear;  /* @kind other */
+
+  /* ---- Semantic transitions ---- */
+  --transition-control: transform var(--dur-fast) var(--ease-stamp),
+                        box-shadow var(--dur-fast) var(--ease-out),
+                        background-color var(--dur-fast) var(--ease-out);  /* @kind other */
+  --transition-color:   color var(--dur-fast) var(--ease-out),
+                        background-color var(--dur-fast) var(--ease-out),
+                        border-color var(--dur-fast) var(--ease-out);  /* @kind other */
+
+  /* Press behaviour: offset matches --shadow-md so the box lands on its shadow */
+  --press-translate: translate(3px, 3px);  /* @kind other */
+}

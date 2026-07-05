@@ -48,8 +48,7 @@ Board items (columns and cards) share a common `board_item` table with a `positi
 
 ### Prerequisites
 
-- JDK 25
-- Docker (used to run PostgreSQL locally; Spring Boot starts the container automatically in dev)
+- Docker (`https://docs.docker.com/desktop/`)
 
 ### 1. Configure environment
 
@@ -68,18 +67,10 @@ POSTGRES_PASSWORD=your_password
 ### 2. Run
 
 ```bash
-./gradlew bootRun
+docker compose up --build
 ```
 
-On startup, Spring Boot's Docker Compose support reads `compose.yaml`, launches the PostgreSQL container (exposed on host port `5433`), and Flyway applies the migrations. The app then starts on `http://localhost:8080`.
-
-### 3. Explore the API
-
-Open the Swagger UI:
-
-```
-http://localhost:8080/swagger-ui/index.html
-```
+On startup, `compose.yaml` setups the application. After the initial build is finished, you can view the app at `http://localhost:8080`.
 
 ## API overview
 

@@ -1,0 +1,31 @@
+.form { display: flex; flex-direction: column; gap: var(--space-4); }
+.row { display: flex; gap: var(--space-4); }
+.col { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: var(--space-1); }
+.label {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  font-weight: var(--fw-bold);
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+  color: var(--ink-700);
+}
+.dateInput {
+  height: var(--control-md);
+  padding: 0 12px;
+  background: var(--paper-0);
+  border: var(--border-line) solid var(--ink-900);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-sm);
+  font-family: var(--font-body);
+  font-size: var(--text-sm);
+  font-weight: var(--fw-medium);
+  color: var(--ink-900);
+  outline: none;
+  transition: var(--transition-color), box-shadow var(--dur-fast) var(--ease-out);
+}
+.dateInput:focus { border-color: var(--signal-500); box-shadow: var(--shadow-signal); }
+
+.footer { display: flex; align-items: center; gap: var(--space-2); width: 100%; }
+.spacer { flex: 1; }
+.confirm { display: flex; align-items: center; gap: var(--space-2); width: 100%; }
+.confirmText { flex: 1; font-family: var(--font-body); font-size: var(--text-sm); font-weight: var(--fw-medium); color: var(--ink-900); }

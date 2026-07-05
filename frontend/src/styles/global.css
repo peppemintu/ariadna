@@ -1,0 +1,47 @@
+/* Reset + base. Tokens live in tokens.css; this only wires them to the page. */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  background: var(--surface-page);
+  color: var(--text-body);
+  font-family: var(--font-body);
+  font-size: var(--text-base);
+  line-height: var(--leading-normal);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
+  color: inherit;
+}
+
+/* Keyboard focus stays visible everywhere — brutalist ink ring. */
+:focus-visible {
+  outline: var(--border-bold) solid var(--focus-ring);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
