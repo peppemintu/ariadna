@@ -1,9 +1,18 @@
-// Card detail / edit dialog. Title/description/deadline go through PUT (with the
-// optimistic-lock version); assignee goes through its own PATCH endpoint. Both
-// fire on Save. A 409 keeps the dialog open, toasts, and re-syncs from server.
+// Card detail / edit dialog with AUTOSAVE. Edits are debounced and pushed to the
+// server automatically; a status pill shows saving/saved/unsaved/error. Closing
+// flushes any pending change (no data loss), so there's no manual Save button.
+//
+// Two subtleties:
+//  * The form is (re)initialised only when the card IDENTITY changes, never on a
+//    version bump — otherwise the refetch our own autosave triggers would wipe an
+//    edit in progress. We carry the optimistic-lock version in a ref, updated
+//    from each save's response.
+//  * Delete uses the shared ConfirmDialog; a failed final save on close prompts a
+//    discard confirmation rather than losing edits silently.
 
-import { useEffect, useState } from "react";
-import { Button, Dialog, Input, Select, Textarea, useToast } from "@/ui";
+import { useEffect, useRef, useState } from "react";
+import { Button, ConfirmDialog, Dialog, Input, SaveIndicator, Select, Textarea, useToast } from "@/ui";
+import type { SaveState } from "@/ui";
 import { useAssignCard, useDeleteCard, useUpdateCard } from "@/hooks/mutations";
 import { ApiError } from "@/api/http";
 import { fromDatetimeLocalValue, toDatetimeLocalValue } from "@/lib/format";
@@ -11,12 +20,20 @@ import type { CardResponse, UserResponse, UUID } from "@/api/types";
 import styles from "./CardDetail.module.css";
 
 const UNASSIGNED = "__unassigned__";
+const AUTOSAVE_MS = 1200;
 
 interface CardDetailProps {
   card: CardResponse | null;
   boardId: UUID;
   members: UserResponse[];
   onClose: () => void;
+}
+
+interface Snapshot {
+  title: string;
+  description: string;
+  deadline: string | null; // normalized ISO or null
+  assignee: string | null;
 }
 
 export function CardDetail({ card, boardId, members, onClose }: CardDetailProps) {
@@ -29,59 +46,115 @@ export function CardDetail({ card, boardId, members, onClose }: CardDetailProps)
   const [description, setDescription] = useState("");
   const [deadline, setDeadline] = useState("");
   const [assigneeId, setAssigneeId] = useState<string>(UNASSIGNED);
-  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [status, setStatus] = useState<SaveState>("saved");
+  const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
+  const [confirmDiscardOpen, setConfirmDiscardOpen] = useState(false);
 
-  // (Re)load the form whenever the card identity or its version changes
-  // (version bump = server sent fresher data, e.g. after a conflict refetch).
+  const versionRef = useRef(0);
+  const savedRef = useRef<Snapshot>({ title: "", description: "", deadline: null, assignee: null });
+  const timerRef = useRef<number | null>(null);
+  const savingRef = useRef(false);
+  const cardIdRef = useRef<string | null>(null);
+
+  // Live mirror of the form so the autosave closure always sees fresh values.
+  const formRef = useRef({ title, description, deadline, assigneeId });
+  formRef.current = { title, description, deadline, assigneeId };
+
+  // Initialise only when the card identity changes (NOT on version bumps).
   useEffect(() => {
-    if (!card) return;
+    if (!card) {
+      cardIdRef.current = null;
+      return;
+    }
+    if (cardIdRef.current === card.id) return;
+    cardIdRef.current = card.id;
+    const dl = toDatetimeLocalValue(card.deadline);
     setTitle(card.title);
     setDescription(card.description ?? "");
-    setDeadline(toDatetimeLocalValue(card.deadline));
+    setDeadline(dl);
     setAssigneeId(card.assigneeId ?? UNASSIGNED);
-    setConfirmDelete(false);
-  }, [card?.id, card?.version]);
+    versionRef.current = card.version;
+    savedRef.current = {
+      title: card.title,
+      description: card.description ?? "",
+      deadline: fromDatetimeLocalValue(dl),
+      assignee: card.assigneeId ?? null,
+    };
+    setStatus("saved");
+    setConfirmDeleteOpen(false);
+    setConfirmDiscardOpen(false);
+  }, [card]);
 
-  if (!card) return null;
+  function computeDirty() {
+    const f = formRef.current;
+    const nd = fromDatetimeLocalValue(f.deadline);
+    const na = f.assigneeId === UNASSIGNED ? null : f.assigneeId;
+    const s = savedRef.current;
+    const coreDirty =
+      f.title.trim() !== s.title ||
+      (f.description.trim() || "") !== (s.description || "") ||
+      (nd ?? "") !== (s.deadline ?? "");
+    const assigneeDirty = na !== s.assignee;
+    return {
+      coreDirty,
+      assigneeDirty,
+      dirty: coreDirty || assigneeDirty,
+      title: f.title.trim(),
+      desc: f.description.trim() || null,
+      nd,
+      na,
+    };
+  }
 
-  // Normalize the stored deadline through the same round-trip the input does,
-  // so second-level precision differences don't read as a spurious edit.
-  const deadlineBaseline = fromDatetimeLocalValue(toDatetimeLocalValue(card.deadline));
-  const dirtyCore =
-    title.trim() !== card.title ||
-    (description.trim() || "") !== (card.description ?? "") ||
-    fromDatetimeLocalValue(deadline) !== deadlineBaseline;
-  const nextAssignee = assigneeId === UNASSIGNED ? null : assigneeId;
-  const dirtyAssignee = nextAssignee !== (card.assigneeId ?? null);
-  const canSave = title.trim().length > 0 && (dirtyCore || dirtyAssignee);
-  const saving = update.isPending || assign.isPending;
+  const scheduleAutosave = () => {
+    if (timerRef.current) clearTimeout(timerRef.current);
+    timerRef.current = window.setTimeout(() => void autosaveRef.current(), AUTOSAVE_MS);
+  };
 
-  const handleSave = async () => {
+  const doAutosave = async (): Promise<boolean> => {
+    if (!card || savingRef.current) return true;
+    const d = computeDirty();
+    if (!d.dirty) {
+      setStatus("saved");
+      return true;
+    }
+    if (!d.title) {
+      setStatus("unsaved"); // can't persist an empty title
+      return false;
+    }
+    savingRef.current = true;
+    setStatus("saving");
     try {
-      if (dirtyCore) {
-        await update.mutateAsync({
+      if (d.coreDirty) {
+        const resp = await update.mutateAsync({
           id: card.id,
-          body: {
-            title: title.trim(),
-            description: description.trim() || null,
-            deadline: fromDatetimeLocalValue(deadline),
-            version: card.version,
-          },
+          body: { title: d.title, description: d.desc, deadline: d.nd, version: versionRef.current },
         });
+        versionRef.current = resp.version;
       }
-      if (dirtyAssignee) {
-        await assign.mutateAsync({ id: card.id, body: { assigneeId: nextAssignee } });
+      if (d.assigneeDirty) {
+        const resp = await assign.mutateAsync({ id: card.id, body: { assigneeId: d.na } });
+        versionRef.current = resp.version;
       }
-      toast({ title: "Card saved", tone: "success" });
-      onClose();
+      savedRef.current = { title: d.title, description: d.desc ?? "", deadline: d.nd, assignee: d.na };
+      savingRef.current = false;
+      // The user may have typed while we were saving — recheck.
+      if (computeDirty().dirty) {
+        setStatus("unsaved");
+        scheduleAutosave();
+      } else {
+        setStatus("saved");
+      }
+      return true;
     } catch (err) {
+      savingRef.current = false;
+      setStatus("error");
       if (err instanceof ApiError && err.isConflict) {
         toast({
           title: "Edit conflict",
-          description: "This card changed elsewhere. Reloaded the latest — reapply your edits.",
+          description: "This card changed elsewhere. Close and reopen to get the latest.",
           tone: "flare",
         });
-        // onSettled in the mutation already refetched; form re-syncs via useEffect.
       } else {
         toast({
           title: "Couldn't save",
@@ -89,16 +162,57 @@ export function CardDetail({ card, boardId, members, onClose }: CardDetailProps)
           tone: "flare",
         });
       }
+      return false;
     }
   };
 
+  const autosaveRef = useRef<() => Promise<boolean>>(async () => true);
+  autosaveRef.current = doAutosave;
+
+  // Debounced autosave on any field change.
+  useEffect(() => {
+    if (!card) return;
+    const d = computeDirty();
+    if (!d.dirty) {
+      if (!savingRef.current) setStatus("saved");
+      return;
+    }
+    setStatus("unsaved");
+    scheduleAutosave();
+    return () => {
+      if (timerRef.current) clearTimeout(timerRef.current);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [title, description, deadline, assigneeId, card]);
+
+  const requestClose = async () => {
+    if (timerRef.current) clearTimeout(timerRef.current);
+    const d = computeDirty();
+    if (!d.dirty) {
+      onClose();
+      return;
+    }
+    if (!d.title) {
+      setConfirmDiscardOpen(true); // empty title — can't save what's there
+      return;
+    }
+    const ok = await autosaveRef.current();
+    if (ok) onClose();
+    else setConfirmDiscardOpen(true);
+  };
+
   const handleDelete = async () => {
+    if (!card) return;
     try {
       await del.mutateAsync(card.id);
       toast({ title: "Card deleted", tone: "ink" });
       onClose();
     } catch (err) {
-      toast({ title: "Couldn't delete", description: err instanceof Error ? err.message : undefined, tone: "flare" });
+      toast({
+        title: "Couldn't delete",
+        description: err instanceof Error ? err.message : undefined,
+        tone: "flare",
+      });
     }
   };
 
@@ -108,62 +222,75 @@ export function CardDetail({ card, boardId, members, onClose }: CardDetailProps)
   ];
 
   return (
-    <Dialog
-      open={Boolean(card)}
-      onOpenChange={(o) => !o && onClose()}
-      title="Card"
-      width={560}
-      footer={
-        <div className={styles.footer}>
-          {confirmDelete ? (
-            <div className={styles.confirm}>
-              <span className={styles.confirmText}>Delete this card?</span>
-              <Button variant="accent" size="sm" onClick={handleDelete} disabled={del.isPending}>
-                {del.isPending ? "Deleting…" : "Delete"}
-              </Button>
-              <Button variant="ghost" size="sm" onClick={() => setConfirmDelete(false)}>Cancel</Button>
+    <>
+      <Dialog
+        open={Boolean(card)}
+        onOpenChange={(o) => !o && void requestClose()}
+        title="Card"
+        width={560}
+        footer={
+          <div className={styles.footer}>
+            <Button variant="ghost" size="sm" onClick={() => setConfirmDeleteOpen(true)}>
+              Delete
+            </Button>
+            <div className={styles.spacer} />
+            <SaveIndicator state={status} />
+            <Button variant="ghost" onClick={() => void requestClose()}>
+              Close
+            </Button>
+          </div>
+        }
+      >
+        <div className={styles.form}>
+          <Input label="Title" value={title} onChange={(e) => setTitle(e.target.value)} />
+          <Textarea
+            label="Description"
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            placeholder="Add more detail…"
+          />
+          <div className={styles.row}>
+            <div className={styles.col}>
+              <label className={styles.label}>Deadline</label>
+              <input
+                type="datetime-local"
+                className={styles.dateInput}
+                value={deadline}
+                onChange={(e) => setDeadline(e.target.value)}
+              />
             </div>
-          ) : (
-            <>
-              <Button variant="ghost" size="sm" onClick={() => setConfirmDelete(true)}>Delete</Button>
-              <div className={styles.spacer} />
-              <Button variant="ghost" onClick={onClose}>Cancel</Button>
-              <Button onClick={handleSave} disabled={!canSave || saving}>
-                {saving ? "Saving…" : "Save"}
-              </Button>
-            </>
-          )}
-        </div>
-      }
-    >
-      <div className={styles.form}>
-        <Input label="Title" value={title} onChange={(e) => setTitle(e.target.value)} />
-        <Textarea
-          label="Description"
-          value={description}
-          onChange={(e) => setDescription(e.target.value)}
-          placeholder="Add more detail…"
-        />
-        <div className={styles.row}>
-          <div className={styles.col}>
-            <label className={styles.label}>Deadline</label>
-            <input
-              type="datetime-local"
-              className={styles.dateInput}
-              value={deadline}
-              onChange={(e) => setDeadline(e.target.value)}
-            />
-          </div>
-          <div className={styles.col}>
-            <Select
-              label="Assignee"
-              value={assigneeId}
-              onChange={setAssigneeId}
-              options={assigneeOptions}
-            />
+            <div className={styles.col}>
+              <Select label="Assignee" value={assigneeId} onChange={setAssigneeId} options={assigneeOptions} />
+            </div>
           </div>
         </div>
-      </div>
-    </Dialog>
+      </Dialog>
+
+      <ConfirmDialog
+        open={confirmDeleteOpen}
+        title="Delete this card?"
+        description="This can't be undone."
+        confirmLabel="Delete"
+        cancelLabel="Cancel"
+        tone="danger"
+        loading={del.isPending}
+        onConfirm={handleDelete}
+        onCancel={() => setConfirmDeleteOpen(false)}
+      />
+
+      <ConfirmDialog
+        open={confirmDiscardOpen}
+        title="Discard unsaved changes?"
+        description="Your latest changes couldn't be saved. Close anyway and lose them?"
+        confirmLabel="Discard & close"
+        cancelLabel="Keep editing"
+        tone="danger"
+        onConfirm={() => {
+          setConfirmDiscardOpen(false);
+          onClose();
+        }}
+        onCancel={() => setConfirmDiscardOpen(false)}
+      />
+    </>
   );
 }

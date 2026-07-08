@@ -3,7 +3,7 @@
 
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Button, Dialog, Input, Menu, useToast } from "@/ui";
+import { Button, ConfirmDialog, Dialog, Input, Menu, useToast } from "@/ui";
 import { useDeleteBoard, useRenameBoard } from "@/hooks/mutations";
 import type { BoardFull } from "@/api/types";
 
@@ -98,20 +98,16 @@ export function BoardMenu({ board, onOpenMembers }: Props) {
         />
       </Dialog>
 
-      <Dialog
+      <ConfirmDialog
         open={deleteOpen}
-        onOpenChange={(o) => !o && setDeleteOpen(false)}
         title="Delete board"
-        width={440}
         description={`“${board.title}” and all of its columns and cards will be gone. This can't be undone.`}
-        footer={
-          <>
-            <Button variant="ghost" onClick={() => setDeleteOpen(false)}>Cancel</Button>
-            <Button variant="accent" onClick={confirmDelete} disabled={del.isPending}>
-              {del.isPending ? "Deleting…" : "Delete board"}
-            </Button>
-          </>
-        }
+        confirmLabel="Delete board"
+        cancelLabel="Cancel"
+        tone="danger"
+        loading={del.isPending}
+        onConfirm={confirmDelete}
+        onCancel={() => setDeleteOpen(false)}
       />
     </>
   );

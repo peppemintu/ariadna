@@ -1,8 +1,8 @@
 // A board column: accent bar, title, add-card button, edit affordance, and
-// sortable cards. Droppable as a whole for empty-space drops. Cards are created
-// from a full dialog opened via the header "+".
+// sortable cards. Memoised so a drag that rebuilds the columns array only
+// re-renders the columns that actually changed.
 
-import { useState } from "react";
+import { memo, useState } from "react";
 import { useDroppable } from "@dnd-kit/core";
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import type { CardCreate, ColumnWithCards, CardResponse, UserResponse, UUID } from "@/api/types";
@@ -19,7 +19,13 @@ interface ColumnProps {
   onCreateCard: (columnId: UUID, body: CardCreate) => void;
 }
 
-export function Column({ column, membersById, members, onCardClick, onCreateCard }: ColumnProps) {
+export const Column = memo(function Column({
+  column,
+  membersById,
+  members,
+  onCardClick,
+  onCreateCard,
+}: ColumnProps) {
   const { setNodeRef, isOver } = useDroppable({ id: column.id });
   const [editing, setEditing] = useState(false);
   const [creating, setCreating] = useState(false);
@@ -32,20 +38,24 @@ export function Column({ column, membersById, members, onCardClick, onCreateCard
         <span className={styles.accent} style={{ background: accent }} aria-hidden />
         <h3 className={styles.title}>{column.title}</h3>
         <button
-          className={styles.add}
+          className={styles.headBtn}
           onClick={() => setCreating(true)}
           aria-label={`Add card to ${column.title}`}
           title="Add card"
         >
-          +
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden>
+            <path d="M11 5h2v6h6v2h-6v6h-2v-6H5v-2h6V5z" />
+          </svg>
         </button>
         <button
-          className={styles.edit}
+          className={styles.headBtn}
           onClick={() => setEditing(true)}
           aria-label={`Edit column ${column.title}`}
           title="Edit column"
         >
-          ✎
+          <svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor" aria-hidden>
+            <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04a.996.996 0 0 0 0-1.41l-2.34-2.34a.996.996 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z" />
+          </svg>
         </button>
       </header>
 
@@ -77,4 +87,4 @@ export function Column({ column, membersById, members, onCardClick, onCreateCard
       />
     </section>
   );
-}
+});

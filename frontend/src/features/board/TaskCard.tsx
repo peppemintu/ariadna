@@ -1,6 +1,7 @@
 // A kanban card. Shows only what the backend actually stores: title,
 // description preview, deadline, assignee. No labels/priority/subtasks.
 
+import { memo } from "react";
 import { Avatar, Badge } from "@/ui";
 import type { CardResponse, UserResponse } from "@/api/types";
 import { formatDeadline, isOverdue } from "@/lib/format";
@@ -12,7 +13,7 @@ interface TaskCardProps {
   onClick?: (card: CardResponse) => void;
 }
 
-export function TaskCard({ card, assignee, onClick }: TaskCardProps) {
+export const TaskCard = memo(function TaskCard({ card, assignee, onClick }: TaskCardProps) {
   const deadline = formatDeadline(card.deadline);
   const overdue = isOverdue(card.deadline);
 
@@ -41,4 +42,4 @@ export function TaskCard({ card, assignee, onClick }: TaskCardProps) {
       )}
     </article>
   );
-}
+});

@@ -14,3 +14,7 @@ export { Badge } from "./Badge";
 export type { BadgeTone } from "./Badge";
 export { Menu } from "./Menu";
 export type { MenuItem } from "./Menu";
+export { ThemeToggle } from "./ThemeToggle";
+export { ConfirmDialog } from "./ConfirmDialog";
+export { SaveIndicator } from "./SaveIndicator";
+export type { SaveState } from "./SaveIndicator";

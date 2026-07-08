@@ -386,3 +386,62 @@
   /* Press behaviour: offset matches --shadow-md so the box lands on its shadow */
   --press-translate: translate(3px, 3px);  /* @kind other */
 }
+
+/* ============================================================
+   DARK THEME
+   Activated by data-theme="dark" on <html>. We override the RAW
+   ramps (components use them directly) + shadows; the semantic
+   aliases above resolve through var() and follow automatically.
+   Brutalism holds: thick light borders, hard BLACK drop shadows
+   (the page bg is navy, not black, so a black shadow still reads).
+   ============================================================ */
+
+:root { color-scheme: light; }
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+
+  /* ---- Raw brand ---- */
+  --ink:    #eaf2fb;
+  --paper:  #0b1a2a;
+  --signal: #2b8cff;
+  --flare:  #ff5a2b;
+
+  /* ---- Ink ramp — inverted: now light, for contrast on dark ---- */
+  --ink-900: #eaf2fb;   /* the signature line + strong text */
+  --ink-700: #c6d5e5;
+  --ink-500: #9bb0c5;
+  --ink-300: #6f8ba3;   /* muted */
+  --ink-200: #465b70;
+  --ink-100: #2c4056;
+
+  /* ---- Paper ramp — now dark surfaces (0 = most raised) ---- */
+  --paper-0:   #16304a;  /* raised card, above the page */
+  --paper-50:  #0b1a2a;  /* page */
+  --paper-100: #081521;  /* sunken well / board background */
+  --paper-200: #21405c;  /* dividers / muted fills (visible on dark) */
+
+  /* ---- Accents — nudged brighter for dark; tint-100 goes dark ---- */
+  --signal-700: #7ab6ff;  /* hover in dark = lighter */
+  --signal-500: #2b8cff;
+  --signal-300: #4f9dff;
+  --signal-100: #12304d;  /* tinted fill / wash (dark) */
+
+  --flare-700:  #ff8a5e;
+  --flare-500:  #ff5a2b;
+  --flare-300:  #ff7a4d;
+  --flare-100:  #3a1c10;
+
+  --go-500:   #2fb36c;
+  --go-100:   #0f3320;
+  --hold-500: #f0b12a;
+  --hold-100: #382b0a;
+
+  /* ---- Hard shadows stay dark (real drop on a navy page) ---- */
+  --shadow-xs:  1px 1px 0 0 #000;
+  --shadow-sm:  2px 2px 0 0 #000;
+  --shadow-md:  4px 4px 0 0 #000;
+  --shadow-lg:  6px 6px 0 0 #000;
+  --shadow-xl:  8px 8px 0 0 #000;
+  --shadow-press: 1px 1px 0 0 #000;
+}

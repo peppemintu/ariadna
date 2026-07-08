@@ -2,7 +2,7 @@
 // optimistic drag-and-drop, and commits changes to the server. Card creation
 // is optimistic (instant placeholder); column creation refetches.
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { DndContext, DragOverlay } from "@dnd-kit/core";
 import { useBoardFull } from "@/hooks/queries";
@@ -74,10 +74,16 @@ export function BoardView() {
       }),
   });
 
-  // Re-sync local state from the server, but never mid-drag (would jump the card).
+  // Re-sync local state whenever the server sends a fresh board, but never
+  // mid-drag (would jump the card) — and crucially not merely because the drag
+  // just ended: we keep the optimistic commit until a fresh board actually
+  // arrives. Guarding via a ref (not a dep) means ending a drag doesn't re-run
+  // this and clobber the local move with stale server data.
+  const activeCardRef = useRef(dnd.activeCard);
+  activeCardRef.current = dnd.activeCard;
   useEffect(() => {
-    if (board && !dnd.activeCard) setColumns(board.columns);
-  }, [board, dnd.activeCard]);
+    if (board && !activeCardRef.current) setColumns(board.columns);
+  }, [board]);
 
   // Board title in the browser tab.
   useEffect(() => {
@@ -101,23 +107,28 @@ export function BoardView() {
     [board, selectedCardId],
   );
 
-  const onCreateCard = (columnId: UUID, body: CardCreate) =>
-    createCard.mutate({ columnId, body });
+  const onCreateCard = useCallback(
+    (columnId: UUID, body: CardCreate) => createCard.mutate({ columnId, body }),
+    [createCard],
+  );
 
-  const onCreateColumn = (title: string, color: string) =>
-    createColumn.mutate(
-      { title, color },
-      {
-        onError: (err) =>
-          toast({
-            title: "Couldn't add the column",
-            description: err instanceof Error ? err.message : undefined,
-            tone: "flare",
-          }),
-      },
-    );
+  const onCreateColumn = useCallback(
+    (title: string, color: string) =>
+      createColumn.mutate(
+        { title, color },
+        {
+          onError: (err) =>
+            toast({
+              title: "Couldn't add the column",
+              description: err instanceof Error ? err.message : undefined,
+              tone: "flare",
+            }),
+        },
+      ),
+    [createColumn, toast],
+  );
 
-  const onCardClick = (card: CardResponse) => setSelectedCardId(card.id);
+  const onCardClick = useCallback((card: CardResponse) => setSelectedCardId(card.id), []);
 
   if (isLoading) return <Centered>Loading board…</Centered>;
   if (isError) {

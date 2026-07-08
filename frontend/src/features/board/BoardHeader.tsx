@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Avatar, Button } from "@/ui";
+import { Avatar, Button, ThemeToggle } from "@/ui";
 import { useCurrentUser } from "@/lib/currentUser";
 import type { BoardFull } from "@/api/types";
 import { BoardMenu } from "./BoardMenu";
@@ -29,6 +29,7 @@ export function BoardHeader({ board, live }: BoardHeaderProps) {
       </div>
 
       <div className={styles.right}>
+        <ThemeToggle />
         <button
           className={styles.membersBtn}
           onClick={() => setMembersOpen(true)}

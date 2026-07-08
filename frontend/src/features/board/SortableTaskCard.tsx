@@ -2,6 +2,7 @@
 // placeholder cards (not on the server yet) can't be dragged or opened —
 // there's nothing to PATCH until the real card lands.
 
+import { memo } from "react";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import type { CardResponse, UserResponse } from "@/api/types";
@@ -14,7 +15,7 @@ interface Props {
   onClick?: (card: CardResponse) => void;
 }
 
-export function SortableTaskCard({ card, assignee, onClick }: Props) {
+export const SortableTaskCard = memo(function SortableTaskCard({ card, assignee, onClick }: Props) {
   const optimistic = isOptimisticId(card.id);
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: card.id,
@@ -35,4 +36,4 @@ export function SortableTaskCard({ card, assignee, onClick }: Props) {
       <TaskCard card={card} assignee={assignee} onClick={optimistic ? undefined : onClick} />
     </div>
   );
-}
+});

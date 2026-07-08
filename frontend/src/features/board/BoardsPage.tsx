@@ -7,7 +7,7 @@ import { useNavigate } from "react-router-dom";
 import { useMyBoards } from "@/hooks/queries";
 import { useCreateBoard, useRenameUser } from "@/hooks/mutations";
 import { useCurrentUser } from "@/lib/currentUser";
-import { Avatar, Button, Dialog, Input, useToast } from "@/ui";
+import { Avatar, Button, Dialog, Input, ThemeToggle, useToast } from "@/ui";
 import styles from "./BoardsPage.module.css";
 
 export function BoardsPage() {
@@ -84,6 +84,7 @@ export function BoardsPage() {
           <h1 className={styles.title}>Boards</h1>
         </div>
         <div className={styles.who}>
+          <ThemeToggle />
           {user && <Avatar name={user.name} size={32} />}
           {user && <span className={styles.whoName}>{user.name}</span>}
           <Button variant="ghost" size="sm" onClick={openRename} aria-label="Rename yourself" title="Rename">✎</Button>
