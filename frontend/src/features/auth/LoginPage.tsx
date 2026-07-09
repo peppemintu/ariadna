@@ -1,56 +1,57 @@
-// User picker + user creation. No passwords on pick — choose who you are and
-// we remember it for the session. Creating a user hits the real backend
-// endpoint (password is stored hashed there, just never checked yet).
+// Sign in / register. Real JWT auth now: login exchanges email+password for a
+// token; register creates the account then signs in. On success we land on the
+// boards. (Register requires a role because the backend's create DTO does —
+// defaults to USER.)
 
 import { useState } from "react";
-import { useNavigate, Navigate } from "react-router-dom";
-import { useUsers } from "@/hooks/queries";
-import { useCreateUser } from "@/hooks/mutations";
+import { Navigate, useNavigate } from "react-router-dom";
 import { useCurrentUser } from "@/lib/currentUser";
-import { Avatar, Badge, Button, Input, useToast } from "@/ui";
-import type { UserResponse, UserRole } from "@/api/types";
+import { Button, Input, Select, Tabs, useToast } from "@/ui";
+import type { UserRole } from "@/api/types";
 import styles from "./LoginPage.module.css";
+
+type Mode = "login" | "register";
 
 export function LoginPage() {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { user, setUser } = useCurrentUser();
-  const { data: users, isLoading, isError, error } = useUsers();
-  const createUser = useCreateUser();
+  const { status, login, register } = useCurrentUser();
 
-  const [formOpen, setFormOpen] = useState(false);
+  const [mode, setMode] = useState<Mode>("login");
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [role, setRole] = useState<UserRole>("USER");
+  const [busy, setBusy] = useState(false);
 
-  if (user) return <Navigate to="/boards" replace />;
-
-  const pick = (u: UserResponse) => {
-    setUser(u);
-    navigate("/boards", { replace: true });
-  };
+  if (status === "authed") return <Navigate to="/boards" replace />;
 
   const emailOk = /\S+@\S+\.\S+/.test(email.trim());
   const passwordOk = password.length >= 8 && password.length <= 72;
-  const canCreate = name.trim().length > 0 && emailOk && passwordOk;
+  const canSubmit =
+    emailOk && passwordOk && (mode === "login" || name.trim().length > 0) && !busy;
 
-  const handleCreate = async () => {
-    if (!canCreate) return;
+  const submit = async () => {
+    if (!canSubmit) return;
+    setBusy(true);
     try {
-      const created = await createUser.mutateAsync({
-        name: name.trim(),
-        email: email.trim(),
-        password,
-        role,
-      });
-      pick(created);
+      if (mode === "login") {
+        await login({ email: email.trim(), password });
+      } else {
+        await register({ name: name.trim(), email: email.trim(), password, role });
+      }
+      navigate("/boards", { replace: true });
     } catch (err) {
+      const msg = err instanceof Error ? err.message : undefined;
       toast({
-        title: "Couldn't create user",
-        description: err instanceof Error ? err.message : undefined,
+        title: mode === "login" ? "Couldn't sign in" : "Couldn't register",
+        description:
+          mode === "login"
+            ? "Check your email and password."
+            : msg ?? "Please try again.",
         tone: "flare",
       });
+      setBusy(false);
     }
   };
 
@@ -58,68 +59,70 @@ export function LoginPage() {
     <main className={styles.page}>
       <div className={styles.panel}>
         <p className={styles.eyebrow}>Ariadna</p>
-        <h1 className={styles.title}>Who's working?</h1>
-        <p className={styles.sub}>Pick your profile to continue.</p>
+        <h1 className={styles.title}>{mode === "login" ? "Welcome back" : "Create your account"}</h1>
+        <p className={styles.sub}>
+          {mode === "login" ? "Sign in to your boards." : "Register to get started."}
+        </p>
 
-        {isLoading && <p className={styles.note}>Loading people…</p>}
-        {isError && (
-          <p className={styles.error}>
-            Can't load users{error instanceof Error ? ` — ${error.message}` : ""}. Is the backend up?
-          </p>
-        )}
-        {users && users.length === 0 && !formOpen && (
-          <p className={styles.note}>No users yet — create the first one below.</p>
-        )}
+        <div className={styles.tabs}>
+          <Tabs
+            value={mode}
+            onChange={(v) => setMode(v as Mode)}
+            tabs={[
+              { value: "login", label: "Sign in" },
+              { value: "register", label: "Register" },
+            ]}
+          />
+        </div>
 
-        {users && users.length > 0 && (
-          <ul className={styles.list}>
-            {users.map((u) => (
-              <li key={u.id}>
-                <button className={styles.userBtn} onClick={() => pick(u)}>
-                  <Avatar name={u.name} size={40} />
-                  <span className={styles.userText}>
-                    <span className={styles.userName}>{u.name}</span>
-                    <span className={styles.userEmail}>{u.email}</span>
-                  </span>
-                  {u.role === "ADMIN" && <Badge tone="ink">Admin</Badge>}
-                </button>
-              </li>
-            ))}
-          </ul>
-        )}
-
-        <div className={styles.divider} aria-hidden />
-
-        {!formOpen ? (
-          <Button variant="default" fullWidth onClick={() => setFormOpen(true)}>
-            + New user
+        <div className={styles.form}>
+          {mode === "register" && (
+            <Input
+              label="Name"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              autoFocus
+            />
+          )}
+          <Input
+            label="Email"
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && submit()}
+            error={email && !emailOk ? "Doesn't look like an email" : undefined}
+            autoFocus={mode === "login"}
+          />
+          <Input
+            label="Password"
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && submit()}
+            hint={mode === "register" ? "8–72 characters." : undefined}
+            error={password && !passwordOk ? "8–72 characters" : undefined}
+          />
+          {mode === "register" && (
+            <Select
+              label="Role"
+              value={role}
+              onChange={(v) => setRole(v as UserRole)}
+              options={[
+                { value: "USER", label: "User" },
+                { value: "ADMIN", label: "Admin" },
+              ]}
+            />
+          )}
+          <Button fullWidth onClick={submit} disabled={!canSubmit}>
+            {busy
+              ? mode === "login"
+                ? "Signing in…"
+                : "Creating account…"
+              : mode === "login"
+                ? "Sign in"
+                : "Create account & sign in"}
           </Button>
-        ) : (
-          <div className={styles.form}>
-            <Input label="Name" value={name} onChange={(e) => setName(e.target.value)} autoFocus />
-            <Input
-              label="Email"
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              error={email && !emailOk ? "Doesn't look like an email" : undefined}
-            />
-            <Input
-              label="Password"
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              hint="8–72 characters. Stored on the backend; not checked at login yet."
-              error={password && !passwordOk ? "8–72 characters" : undefined}
-            />
-            <div className={styles.formActions}>
-              <Button onClick={handleCreate} disabled={!canCreate || createUser.isPending}>
-                {createUser.isPending ? "Creating…" : "Create & sign in"}
-              </Button>
-              <Button variant="ghost" onClick={() => setFormOpen(false)}>Cancel</Button>
-            </div>
-          </div>
-        )}
+        </div>
       </div>
     </main>
   );

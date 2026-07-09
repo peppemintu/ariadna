@@ -4,6 +4,7 @@
 // before the socket is up. Connection status is exposed for a "live" indicator.
 
 import { Client, type IMessage, type StompSubscription } from "@stomp/stompjs";
+import { getToken } from "@/lib/auth";
 import type { BoardMessage, UUID } from "@/api/types";
 
 function wsUrl(): string {
@@ -40,6 +41,14 @@ function getClient(): Client {
     reconnectDelay: 3000,
     heartbeatIncoming: 10000,
     heartbeatOutgoing: 10000,
+    // Auth travels in the STOMP CONNECT frame (browsers can't set headers on the
+    // WebSocket handshake). Refreshed here so reconnects use the current token.
+    // NOTE: the backend must permit the /ws handshake and read this header at the
+    // STOMP layer — see the interceptor in the chat notes.
+    beforeConnect: () => {
+      const token = getToken();
+      client!.connectHeaders = token ? { Authorization: `Bearer ${token}` } : {};
+    },
     onConnect: () => {
       connected = true;
       emitStatus();

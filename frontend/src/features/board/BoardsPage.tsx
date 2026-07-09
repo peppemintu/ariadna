@@ -13,7 +13,7 @@ import styles from "./BoardsPage.module.css";
 export function BoardsPage() {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { user, setUser } = useCurrentUser();
+  const { user, setUser, logout } = useCurrentUser();
 
   const { data: boards, isLoading, isError, error } = useMyBoards(user?.id);
 
@@ -71,8 +71,8 @@ export function BoardsPage() {
     }
   };
 
-  const logout = () => {
-    setUser(null);
+  const handleLogout = () => {
+    logout();
     navigate("/login", { replace: true });
   };
 
@@ -88,7 +88,7 @@ export function BoardsPage() {
           {user && <Avatar name={user.name} size={32} />}
           {user && <span className={styles.whoName}>{user.name}</span>}
           <Button variant="ghost" size="sm" onClick={openRename} aria-label="Rename yourself" title="Rename">✎</Button>
-          <Button variant="ghost" size="sm" onClick={logout}>Switch user</Button>
+          <Button variant="ghost" size="sm" onClick={handleLogout}>Log out</Button>
         </div>
       </header>
 

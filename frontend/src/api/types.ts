@@ -30,6 +30,15 @@ export interface UserCreateRequest {
   name: string;
   role: UserRole;
 }
+export interface LoginRequest {
+  email: string;
+  password: string; // 8..72
+}
+
+export interface AuthResponse {
+  accessToken: string;
+}
+
 export interface UserUpdateRequest {
   name: string;
 }

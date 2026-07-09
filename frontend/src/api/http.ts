@@ -1,5 +1,8 @@
-// Thin fetch wrapper. Everything goes through here so error handling —
-// especially the 409 optimistic-lock conflict — lives in one place.
+// Thin fetch wrapper. Everything goes through here so error handling — the 409
+// optimistic-lock conflict AND auth (Bearer token + session expiry) — lives in
+// one place.
+
+import { getToken, clearToken, notifySessionExpired } from "@/lib/auth";
 
 const BASE = import.meta.env.VITE_API_BASE ?? ""; // "" => same-origin (Vite proxy)
 
@@ -19,16 +22,21 @@ export class ApiError extends Error {
   get isNotFound() {
     return this.status === 404;
   }
+  /** Missing/invalid/expired credentials. */
+  get isAuth() {
+    return this.status === 401 || this.status === 403;
+  }
 }
 
-async function request<T>(
-  method: string,
-  path: string,
-  body?: unknown,
-): Promise<T> {
+async function request<T>(method: string, path: string, body?: unknown): Promise<T> {
+  const token = getToken();
+  const headers: Record<string, string> = {};
+  if (body !== undefined) headers["Content-Type"] = "application/json";
+  if (token) headers["Authorization"] = `Bearer ${token}`;
+
   const res = await fetch(BASE + path, {
     method,
-    headers: body !== undefined ? { "Content-Type": "application/json" } : undefined,
+    headers: Object.keys(headers).length ? headers : undefined,
     body: body !== undefined ? JSON.stringify(body) : undefined,
   });
 
@@ -44,6 +52,15 @@ async function request<T>(
       (parsed && typeof parsed === "object" && "message" in parsed
         ? String((parsed as { message: unknown }).message)
         : undefined) ?? `${method} ${path} failed (${res.status})`;
+
+    // A 401/403 on an authenticated request means the session is gone — but the
+    // login/register calls carry no token and their 401 (bad password) must NOT
+    // trigger a global logout.
+    if ((res.status === 401 || res.status === 403) && token) {
+      clearToken();
+      notifySessionExpired();
+    }
+
     throw new ApiError(res.status, msg, parsed);
   }
 

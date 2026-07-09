@@ -10,18 +10,25 @@ import type {
   BoardFull,
   BoardRequest,
   BoardResponse,
+  AuthResponse,
   BoardUserResponse,
   CardAssign,
   CardCreate,
   CardMove,
   CardResponse,
   CardUpdate,
+  LoginRequest,
   UserCreateRequest,
   UserResponse,
   UserRole,
   UserUpdateRequest,
   UUID,
 } from "./types";
+
+export const authApi = {
+  login: (b: LoginRequest) => http.post<AuthResponse>("/api/auth/login", b),
+  register: (b: UserCreateRequest) => http.post<UserResponse>("/api/auth/register", b),
+};
 
 export const usersApi = {
   list: () => http.get<UserResponse[]>("/api/user"),
