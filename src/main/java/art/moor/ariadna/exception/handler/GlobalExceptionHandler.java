@@ -8,6 +8,7 @@ import org.springframework.http.ProblemDetail;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.security.core.AuthenticationException;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -27,6 +28,13 @@ public class GlobalExceptionHandler {
         pd.setTitle("Invalid request");
         pd.setProperty("errors", errors);
         return pd;
+    }
+
+    @ExceptionHandler(AuthenticationException.class)
+    public ProblemDetail handle401(AuthenticationException ex) {
+        ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(HttpStatus.UNAUTHORIZED, "Invalid email or password");
+        problemDetail.setTitle("Not authorized");
+        return problemDetail;
     }
 
     @ExceptionHandler(ResourceNotFoundException.class)

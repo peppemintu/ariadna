@@ -14,6 +14,7 @@ public interface UserMapper {
 
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "passwordHash", ignore = true)
+    @Mapping(target = "role", expression = "java(art.moor.ariadna.data.model.UserRole.USER)")
     User fromCreate(UserCreateRequestDto dto);
 
     @Mapping(target = "id", ignore = true)

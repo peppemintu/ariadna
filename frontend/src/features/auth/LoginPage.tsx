@@ -7,7 +7,7 @@ import { useNavigate, Navigate } from "react-router-dom";
 import { useUsers } from "@/hooks/queries";
 import { useCreateUser } from "@/hooks/mutations";
 import { useCurrentUser } from "@/lib/currentUser";
-import { Avatar, Badge, Button, Input, Select, useToast } from "@/ui";
+import { Avatar, Badge, Button, Input, useToast } from "@/ui";
 import type { UserResponse, UserRole } from "@/api/types";
 import styles from "./LoginPage.module.css";
 
@@ -111,15 +111,6 @@ export function LoginPage() {
               onChange={(e) => setPassword(e.target.value)}
               hint="8–72 characters. Stored on the backend; not checked at login yet."
               error={password && !passwordOk ? "8–72 characters" : undefined}
-            />
-            <Select
-              label="Role"
-              value={role}
-              onChange={(v) => setRole(v as UserRole)}
-              options={[
-                { value: "USER", label: "User" },
-                { value: "ADMIN", label: "Admin" },
-              ]}
             />
             <div className={styles.formActions}>
               <Button onClick={handleCreate} disabled={!canCreate || createUser.isPending}>

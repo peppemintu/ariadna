@@ -1,6 +1,5 @@
 package art.moor.ariadna.controller;
 
-import art.moor.ariadna.data.dto.user.UserCreateRequestDto;
 import art.moor.ariadna.data.dto.user.UserUpdateRequestDto;
 import art.moor.ariadna.data.dto.user.UserResponseDto;
 import art.moor.ariadna.data.model.UserRole;
@@ -9,9 +8,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.util.UriComponentsBuilder;
 
-import java.net.URI;
 import java.util.List;
 import java.util.UUID;
 
@@ -21,18 +18,6 @@ import java.util.UUID;
 public class UserController {
 
     private final UserService userService;
-
-    @PostMapping
-    public ResponseEntity<UserResponseDto> create(
-            @Valid @RequestBody UserCreateRequestDto request,
-            UriComponentsBuilder uriBuilder
-    ) {
-        UserResponseDto created = userService.createUser(request);
-        URI location = uriBuilder.path("/api/user/{id}")
-                .buildAndExpand(created.id())
-                .toUri();
-        return ResponseEntity.created(location).body(created);
-    }
 
     @GetMapping("/{id}")
     public UserResponseDto getById(@PathVariable UUID id) {
