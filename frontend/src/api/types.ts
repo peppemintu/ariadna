@@ -28,7 +28,6 @@ export interface UserCreateRequest {
   email: string;
   password: string; // 8..72
   name: string;
-  role: UserRole;
 }
 export interface LoginRequest {
   email: string;

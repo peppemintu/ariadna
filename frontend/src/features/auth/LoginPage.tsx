@@ -6,8 +6,7 @@
 import { useState } from "react";
 import { Navigate, useNavigate } from "react-router-dom";
 import { useCurrentUser } from "@/lib/currentUser";
-import { Button, Input, Select, Tabs, useToast } from "@/ui";
-import type { UserRole } from "@/api/types";
+import { Button, Input, Tabs, useToast } from "@/ui";
 import styles from "./LoginPage.module.css";
 
 type Mode = "login" | "register";
@@ -21,7 +20,6 @@ export function LoginPage() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [role, setRole] = useState<UserRole>("USER");
   const [busy, setBusy] = useState(false);
 
   if (status === "authed") return <Navigate to="/boards" replace />;
@@ -38,7 +36,7 @@ export function LoginPage() {
       if (mode === "login") {
         await login({ email: email.trim(), password });
       } else {
-        await register({ name: name.trim(), email: email.trim(), password, role });
+        await register({ name: name.trim(), email: email.trim(), password });
       }
       navigate("/boards", { replace: true });
     } catch (err) {
@@ -102,17 +100,6 @@ export function LoginPage() {
             hint={mode === "register" ? "8–72 characters." : undefined}
             error={password && !passwordOk ? "8–72 characters" : undefined}
           />
-          {mode === "register" && (
-            <Select
-              label="Role"
-              value={role}
-              onChange={(v) => setRole(v as UserRole)}
-              options={[
-                { value: "USER", label: "User" },
-                { value: "ADMIN", label: "Admin" },
-              ]}
-            />
-          )}
           <Button fullWidth onClick={submit} disabled={!canSubmit}>
             {busy
               ? mode === "login"
