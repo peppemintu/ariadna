@@ -203,7 +203,7 @@ public class CardService {
     }
 
     private BoardUser resolveAssignee(UUID assigneeId, UUID boardId) {
-        return boardUserRepository.findByIdAndBoardId(assigneeId, boardId)
+        return boardUserRepository.findByUserIdAndBoardId(assigneeId, boardId)
                 .orElseThrow(() -> new BoardUserNotFoundException(assigneeId));
     }
 

@@ -9,5 +9,5 @@ import java.util.UUID;
 
 @Repository
 public interface BoardUserRepository extends JpaRepository<BoardUser, UUID> {
-    Optional<BoardUser> findByIdAndBoardId(UUID id, UUID boardId);
+    Optional<BoardUser> findByUserIdAndBoardId(UUID id, UUID boardId);
 }
