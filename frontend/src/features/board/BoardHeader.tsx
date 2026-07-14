@@ -1,10 +1,11 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Avatar, Button, ThemeToggle } from "@/ui";
+import { Avatar, Button } from "@/ui";
 import { useCurrentUser } from "@/lib/currentUser";
 import type { BoardFull } from "@/api/types";
 import { BoardMenu } from "./BoardMenu";
 import { MembersDialog } from "./MembersDialog";
+import { SettingsMenu } from "@/features/settings/SettingsMenu";
 import styles from "./BoardHeader.module.css";
 
 interface BoardHeaderProps {
@@ -14,8 +15,13 @@ interface BoardHeaderProps {
 
 export function BoardHeader({ board, live }: BoardHeaderProps) {
   const navigate = useNavigate();
-  const { user } = useCurrentUser();
+  const { user, logout } = useCurrentUser();
   const [membersOpen, setMembersOpen] = useState(false);
+
+  const handleLogout = () => {
+    logout();
+    navigate("/login", { replace: true });
+  };
 
   return (
     <header className={styles.header}>
@@ -29,7 +35,6 @@ export function BoardHeader({ board, live }: BoardHeaderProps) {
       </div>
 
       <div className={styles.right}>
-        <ThemeToggle />
         <button
           className={styles.membersBtn}
           onClick={() => setMembersOpen(true)}
@@ -52,6 +57,7 @@ export function BoardHeader({ board, live }: BoardHeaderProps) {
 
         {user && <Avatar name={user.name} size={32} title={`You — ${user.name}`} />}
         <BoardMenu board={board} onOpenMembers={() => setMembersOpen(true)} />
+        <SettingsMenu onLogout={handleLogout} />
       </div>
 
       <MembersDialog board={board} open={membersOpen} onClose={() => setMembersOpen(false)} />

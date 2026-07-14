@@ -1,0 +1,38 @@
+.addCard {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-3);
+  height: 44px;
+  padding: 0 var(--space-4) 0 var(--space-4);
+  background: var(--signal-500);
+  border: var(--border-bold) solid var(--ink-900);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+  color: var(--text-on-signal);
+  cursor: pointer;
+  transition: var(--transition-control);
+}
+.addCard:hover { transform: translate(-2px, -2px); box-shadow: var(--shadow-md); }
+.addCard:active { transform: var(--press-translate); box-shadow: var(--shadow-press); }
+
+.plus { display: inline-flex; }
+.addLabel {
+  font-family: var(--font-display);
+  font-size: var(--text-base);
+  font-weight: var(--fw-bold);
+  letter-spacing: var(--tracking-tight);
+}
+.kbd {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  background: rgba(255, 255, 255, 0.22);
+  border: var(--border-hair) solid rgba(255, 255, 255, 0.5);
+  border-radius: var(--radius-sm);
+  font-family: var(--font-mono);
+  font-size: var(--text-2xs);
+  font-weight: var(--fw-bold);
+}

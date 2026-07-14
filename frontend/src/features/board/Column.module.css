@@ -8,7 +8,17 @@
   border: var(--border-line) solid var(--ink-900);
   border-radius: var(--radius-md);
   box-shadow: var(--shadow-md);
+  /* Clip the colored header to the rounded border — otherwise the accent fill
+     bleeds past the corner curve (its radius > the border's inner radius). */
+  overflow: hidden;
 }
+/* Colored column: muted, theme-aware body tint derived from the accent.
+   In light theme the surface is light and the mix reads as a pale wash;
+   in dark theme the surface is dark and the same mix reads as a deep tint. */
+.column[data-colored] {
+  background: color-mix(in srgb, var(--col-accent) 14%, var(--surface-board));
+}
+
 .head {
   display: flex;
   align-items: center;
@@ -16,9 +26,14 @@
   padding: 10px 12px;
   background: var(--paper-0);
   border-bottom: var(--border-line) solid var(--ink-900);
-  border-radius: var(--radius-md) var(--radius-md) 0 0;
 }
-.accent { width: 12px; height: 18px; border: 2px solid var(--ink-900); border-radius: 2px; flex: 0 0 auto; }
+/* Colored header: painted in the exact shade the user chose, with a
+   contrast-checked text color computed in color.ts. */
+.column[data-colored] .head {
+  background: var(--col-accent);
+  color: var(--col-on-accent);
+}
+
 .title {
   flex: 1;
   min-width: 0;
@@ -32,6 +47,8 @@
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+.column[data-colored] .title { color: var(--col-on-accent); }
+
 .body {
   display: flex;
   flex-direction: column;
@@ -43,6 +60,9 @@
   transition: background var(--dur-fast) var(--ease-out);
 }
 .body[data-over] { background: var(--signal-100); }
+.column[data-colored] .body[data-over] {
+  background: color-mix(in srgb, var(--col-accent) 26%, var(--surface-board));
+}
 .empty {
   padding: 10px;
   text-align: center;

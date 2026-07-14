@@ -5,6 +5,8 @@ import { memo } from "react";
 import { Avatar, Badge } from "@/ui";
 import type { CardResponse, UserResponse } from "@/api/types";
 import { formatDeadline, isOverdue } from "@/lib/format";
+import { stripMarkdown } from "@/lib/richText";
+import { useSettings } from "@/lib/settings";
 import styles from "./TaskCard.module.css";
 
 interface TaskCardProps {
@@ -14,8 +16,10 @@ interface TaskCardProps {
 }
 
 export const TaskCard = memo(function TaskCard({ card, assignee, onClick }: TaskCardProps) {
+  const { settings } = useSettings();
   const deadline = formatDeadline(card.deadline);
   const overdue = isOverdue(card.deadline);
+  const preview = stripMarkdown(card.description);
 
   return (
     <article
@@ -25,8 +29,10 @@ export const TaskCard = memo(function TaskCard({ card, assignee, onClick }: Task
       tabIndex={onClick ? 0 : undefined}
       onKeyDown={onClick ? (e) => (e.key === "Enter" || e.key === " ") && onClick(card) : undefined}
     >
-      <h4 className={styles.title}>{card.title}</h4>
-      {card.description && <p className={styles.desc}>{card.description}</p>}
+      <h4 className={styles.title} data-truncate={settings.truncateCardTitles ? "" : undefined}>
+        {card.title}
+      </h4>
+      {preview && <p className={styles.desc}>{preview}</p>}
 
       {(deadline || assignee) && (
         <div className={styles.footer}>

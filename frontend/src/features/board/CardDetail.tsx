@@ -11,7 +11,7 @@
 //    discard confirmation rather than losing edits silently.
 
 import { useEffect, useRef, useState } from "react";
-import { Button, ConfirmDialog, Dialog, Input, SaveIndicator, Select, Textarea, useToast } from "@/ui";
+import { Button, ConfirmDialog, Dialog, Input, RichTextEditor, SaveIndicator, Select, useToast } from "@/ui";
 import type { SaveState } from "@/ui";
 import { useAssignCard, useDeleteCard, useUpdateCard } from "@/hooks/mutations";
 import { ApiError } from "@/api/http";
@@ -205,6 +205,10 @@ export function CardDetail({ card, boardId, members, onClose }: CardDetailProps)
     if (!card) return;
     try {
       await del.mutateAsync(card.id);
+      // Close the confirmation first: the card becomes null and the parent
+      // unmounts the detail dialog, but the confirm overlay lives outside it and
+      // would otherwise linger open over an empty board.
+      setConfirmDeleteOpen(false);
       toast({ title: "Card deleted", tone: "ink" });
       onClose();
     } catch (err) {
@@ -243,11 +247,12 @@ export function CardDetail({ card, boardId, members, onClose }: CardDetailProps)
       >
         <div className={styles.form}>
           <Input label="Title" value={title} onChange={(e) => setTitle(e.target.value)} />
-          <Textarea
+          <RichTextEditor
             label="Description"
             value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            placeholder="Add more detail…"
+            onChange={setDescription}
+            defaultMode="preview"
+            placeholder="Add more detail… links, lists and formatting supported"
           />
           <div className={styles.row}>
             <div className={styles.col}>

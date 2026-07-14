@@ -12,6 +12,7 @@ import { ApiError } from "@/api/http";
 import { Button, Tabs, useToast } from "@/ui";
 import type { CardCreate, CardResponse, ColumnWithCards, UserResponse, UUID } from "@/api/types";
 import { BoardHeader } from "./BoardHeader";
+import { BoardToolbar } from "./BoardToolbar";
 import { Column } from "./Column";
 import { TaskCard } from "./TaskCard";
 import { CardDetail } from "./CardDetail";
@@ -19,6 +20,7 @@ import { ListView } from "./ListView";
 import { ActivityFeed } from "./ActivityFeed";
 import { ColumnComposer } from "./ColumnComposer";
 import { useBoardDnd, type MoveCommit } from "./useBoardDnd";
+import { useEdgeAutoScroll } from "@/hooks/useEdgeAutoScroll";
 import styles from "./BoardView.module.css";
 
 export function BoardView() {
@@ -73,6 +75,11 @@ export function BoardView() {
         },
       }),
   });
+
+  // Hover-to-scroll near the board's left/right edges. Off during a drag, where
+  // dnd-kit runs its own auto-scroll.
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const activeEdge = useEdgeAutoScroll(scrollRef, { enabled: !dnd.activeCard });
 
   // Re-sync local state whenever the server sends a fresh board, but never
   // mid-drag (would jump the card) — and crucially not merely because the drag
@@ -151,6 +158,12 @@ export function BoardView() {
       <BoardHeader board={board} live={connected} />
 
       <div className={styles.tabbar}>
+        <BoardToolbar
+          boardId={board.id}
+          columns={columns}
+          members={board.members}
+          onCreateCard={onCreateCard}
+        />
         <Tabs
           value={tab}
           onChange={(v) => setTab(v as "board" | "list" | "activity")}
@@ -163,38 +176,40 @@ export function BoardView() {
       </div>
 
       {tab === "board" && (
-        <div className={styles.scroll}>
-          <DndContext
-            sensors={dnd.sensors}
-            collisionDetection={dnd.collisionDetection}
-            onDragStart={dnd.handlers.onDragStart}
-            onDragOver={dnd.handlers.onDragOver}
-            onDragEnd={dnd.handlers.onDragEnd}
-            onDragCancel={dnd.handlers.onDragCancel}
-          >
-            <div className={styles.row}>
-              {columns.map((col) => (
-                <Column
-                  key={col.id}
-                  column={col}
-                  membersById={membersById}
-                  members={board.members}
-                  onCardClick={onCardClick}
-                  onCreateCard={onCreateCard}
-                />
-              ))}
-              <ColumnComposer onCreate={onCreateColumn} />
-            </div>
+        <div className={styles.boardArea}>
+          <div className={styles.edgeHint} data-side="left" data-active={activeEdge === "left" ? "" : undefined} aria-hidden />
+          <div className={styles.edgeHint} data-side="right" data-active={activeEdge === "right" ? "" : undefined} aria-hidden />
+          <div ref={scrollRef} className={styles.scroll} data-scroll>
+            <DndContext
+              sensors={dnd.sensors}
+              collisionDetection={dnd.collisionDetection}
+              onDragStart={dnd.handlers.onDragStart}
+              onDragOver={dnd.handlers.onDragOver}
+              onDragEnd={dnd.handlers.onDragEnd}
+              onDragCancel={dnd.handlers.onDragCancel}
+            >
+              <div className={styles.row}>
+                {columns.map((col) => (
+                  <Column
+                    key={col.id}
+                    column={col}
+                    membersById={membersById}
+                    onCardClick={onCardClick}
+                  />
+                ))}
+                <ColumnComposer onCreate={onCreateColumn} />
+              </div>
 
-            <DragOverlay>
-              {dnd.activeCard ? (
-                <TaskCard
-                  card={dnd.activeCard}
-                  assignee={dnd.activeCard.assigneeId ? membersById.get(dnd.activeCard.assigneeId) : undefined}
-                />
-              ) : null}
-            </DragOverlay>
-          </DndContext>
+              <DragOverlay>
+                {dnd.activeCard ? (
+                  <TaskCard
+                    card={dnd.activeCard}
+                    assignee={dnd.activeCard.assigneeId ? membersById.get(dnd.activeCard.assigneeId) : undefined}
+                  />
+                ) : null}
+              </DragOverlay>
+            </DndContext>
+          </div>
         </div>
       )}
 

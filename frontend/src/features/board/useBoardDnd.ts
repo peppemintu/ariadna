@@ -1,15 +1,27 @@
 // Encapsulates all board drag-and-drop state and event wiring so BoardView stays
 // declarative. Between-column moves happen live in local state during dragOver;
 // the server commit is computed once on dragEnd from the final neighbours.
+//
+// Stability note: naive `closestCorners` + a state update in `onDragOver` can
+// oscillate at a column boundary — inserting the card grows one column and
+// shrinks another, shifting the pointer's target back and forth every frame,
+// which snowballs into React's "maximum update depth exceeded". We fix this with
+// the dnd-kit multi-container recipe: pointer-first collision detection plus a
+// `recentlyMovedToNewContainer` latch that pins the over-target to the last one
+// until the layout settles (reset on the next animation frame).
 
-import { useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
+  type CollisionDetection,
   type DragStartEvent,
   type DragOverEvent,
   type DragEndEvent,
+  type UniqueIdentifier,
   KeyboardSensor,
   PointerSensor,
-  closestCorners,
+  getFirstCollision,
+  pointerWithin,
+  rectIntersection,
   useSensor,
   useSensors,
 } from "@dnd-kit/core";
@@ -34,11 +46,40 @@ interface Params {
 export function useBoardDnd({ columns, setColumns, commitMove }: Params) {
   const [activeCard, setActiveCard] = useState<CardResponse | null>(null);
 
+  const lastOverId = useRef<UniqueIdentifier | null>(null);
+  const recentlyMovedToNewContainer = useRef(false);
+
+  // Release the latch once the post-move render has painted.
+  useEffect(() => {
+    const raf = requestAnimationFrame(() => {
+      recentlyMovedToNewContainer.current = false;
+    });
+    return () => cancelAnimationFrame(raf);
+  }, [columns]);
+
   // Small activation distance so a plain click (open detail) isn't read as a drag.
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
   );
+
+  // Pointer-first detection with a rect fallback, stabilised so the over-target
+  // doesn't flip-flop right after a cross-column insert.
+  const collisionDetection: CollisionDetection = useCallback((args) => {
+    const pointerCollisions = pointerWithin(args);
+    const collisions = pointerCollisions.length > 0 ? pointerCollisions : rectIntersection(args);
+    const overId = getFirstCollision(collisions, "id");
+
+    if (overId != null) {
+      lastOverId.current = overId;
+      return [{ id: overId }];
+    }
+    // Just moved to a new column, or lost the target mid-shift: hold the last one.
+    if (recentlyMovedToNewContainer.current) {
+      lastOverId.current = args.active.id;
+    }
+    return lastOverId.current ? [{ id: lastOverId.current }] : [];
+  }, []);
 
   const findCard = (id: UUID): CardResponse | undefined =>
     columns.flatMap((c) => c.cards).find((c) => c.id === id);
@@ -58,6 +99,7 @@ export function useBoardDnd({ columns, setColumns, commitMove }: Params) {
     const toCol = isColumnId(columns, overId) ? overId : columnIdOfCard(columns, overId);
     if (!fromCol || !toCol || fromCol === toCol) return;
 
+    recentlyMovedToNewContainer.current = true;
     setColumns((prev) => {
       const target = prev.find((c) => c.id === toCol);
       if (!target) return prev;
@@ -74,6 +116,7 @@ export function useBoardDnd({ columns, setColumns, commitMove }: Params) {
     const activeId = active.id as UUID;
     const dragged = activeCard;
     setActiveCard(null);
+    lastOverId.current = null;
     if (!over || !dragged) return;
 
     const overId = over.id as UUID;
@@ -106,11 +149,14 @@ export function useBoardDnd({ columns, setColumns, commitMove }: Params) {
     });
   };
 
-  const onDragCancel = () => setActiveCard(null);
+  const onDragCancel = () => {
+    setActiveCard(null);
+    lastOverId.current = null;
+  };
 
   return {
     sensors,
-    collisionDetection: closestCorners,
+    collisionDetection,
     activeCard,
     handlers: { onDragStart, onDragOver, onDragEnd, onDragCancel },
   };

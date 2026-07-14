@@ -31,8 +31,11 @@ export function ColumnComposer({ onCreate }: Props) {
 
   if (!open) {
     return (
-      <button className={styles.trigger} onClick={() => setOpen(true)}>
-        + Add column
+      <button className={styles.trigger} onClick={() => setOpen(true)} title="Add column">
+        <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor" aria-hidden>
+          <path d="M11 5h2v6h6v2h-6v6h-2v-6H5v-2h6V5z" />
+        </svg>
+        Column
       </button>
     );
   }

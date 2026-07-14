@@ -45,3 +45,36 @@ select {
     transition-duration: 0.01ms !important;
   }
 }
+
+/* ------------------------------------------------------------------ *
+ * Custom scrollbar — brutalist ink thumb with a hard border. Opt in by
+ * adding `data-scroll` to any scrollable element (column bodies, board).
+ * ------------------------------------------------------------------ */
+[data-scroll] {
+  scrollbar-width: thin;                               /* Firefox */
+  scrollbar-color: var(--ink-700) transparent;
+}
+[data-scroll]::-webkit-scrollbar {
+  width: 12px;
+  height: 12px;
+}
+[data-scroll]::-webkit-scrollbar-track {
+  background: transparent;
+}
+[data-scroll]::-webkit-scrollbar-thumb {
+  background: var(--ink-700);
+  border: 3px solid transparent;
+  background-clip: padding-box;
+  border-radius: var(--radius-md);
+}
+[data-scroll]::-webkit-scrollbar-thumb:hover {
+  background: var(--signal-500);
+  background-clip: padding-box;
+}
+[data-scroll]::-webkit-scrollbar-thumb:active {
+  background: var(--ink-900);
+  background-clip: padding-box;
+}
+[data-scroll]::-webkit-scrollbar-corner {
+  background: transparent;
+}

@@ -1,8 +1,13 @@
+/* Compact, low-emphasis affordance — columns are added rarely, so this stays
+   out of the way at the end of the row instead of occupying a full column slot. */
 .trigger {
-  flex: 0 0 var(--width-column);
-  width: var(--width-column);
-  min-height: 120px;
+  flex: 0 0 auto;
   align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 40px;
+  padding: 0 14px;
   background: transparent;
   border: 2px dashed var(--ink-200);
   border-radius: var(--radius-md);
@@ -13,9 +18,10 @@
   text-transform: uppercase;
   color: var(--ink-500);
   cursor: pointer;
+  white-space: nowrap;
   transition: var(--transition-color);
 }
-.trigger:hover { border-color: var(--ink-900); color: var(--ink-900); }
+.trigger:hover { border-color: var(--ink-900); color: var(--ink-900); background: var(--paper-0); }
 .panel {
   flex: 0 0 var(--width-column);
   width: var(--width-column);

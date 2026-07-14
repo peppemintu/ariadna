@@ -7,7 +7,8 @@ import { useNavigate } from "react-router-dom";
 import { useMyBoards } from "@/hooks/queries";
 import { useCreateBoard, useRenameUser } from "@/hooks/mutations";
 import { useCurrentUser } from "@/lib/currentUser";
-import { Avatar, Button, Dialog, Input, ThemeToggle, useToast } from "@/ui";
+import { Avatar, Button, Dialog, Input, useToast } from "@/ui";
+import { SettingsMenu } from "@/features/settings/SettingsMenu";
 import styles from "./BoardsPage.module.css";
 
 export function BoardsPage() {
@@ -79,16 +80,29 @@ export function BoardsPage() {
   return (
     <main className={styles.page}>
       <header className={styles.top}>
-        <div>
+        <div className={styles.titleBlock}>
           <p className={styles.eyebrow}>Ariadna</p>
           <h1 className={styles.title}>Boards</h1>
+          <div className={styles.titleActions}>
+            <Button size="sm" onClick={() => setCreateOpen(true)} iconLeft="+">New board</Button>
+          </div>
         </div>
         <div className={styles.who}>
-          <ThemeToggle />
-          {user && <Avatar name={user.name} size={32} />}
-          {user && <span className={styles.whoName}>{user.name}</span>}
-          <Button variant="ghost" size="sm" onClick={openRename} aria-label="Rename yourself" title="Rename">✎</Button>
-          <Button variant="ghost" size="sm" onClick={handleLogout}>Log out</Button>
+          <div className={styles.identity}>
+            {user && <Avatar name={user.name} size={32} />}
+            {user && <span className={styles.whoName}>{user.name}</span>}
+            <button
+              className={styles.editName}
+              onClick={openRename}
+              aria-label="Rename yourself"
+              title="Rename"
+            >
+              <svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor" aria-hidden>
+                <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04a.996.996 0 0 0 0-1.41l-2.34-2.34a.996.996 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z" />
+              </svg>
+            </button>
+          </div>
+          <SettingsMenu onLogout={handleLogout} />
         </div>
       </header>
 
@@ -99,13 +113,8 @@ export function BoardsPage() {
         </p>
       )}
 
-      {boards && (
+      {boards && boards.length > 0 && (
         <ul className={styles.grid}>
-          <li>
-            <button className={styles.newCard} onClick={() => setCreateOpen(true)}>
-              + New board
-            </button>
-          </li>
           {boards.map((b) => (
             <li key={b.id}>
               <button className={styles.card} onClick={() => navigate(`/board/${b.id}`)}>
@@ -119,7 +128,11 @@ export function BoardsPage() {
         </ul>
       )}
       {boards && boards.length === 0 && (
-        <p className={styles.note}>No boards yet — create your first one.</p>
+        <div className={styles.empty}>
+          <p className={styles.emptyTitle}>No boards yet</p>
+          <p className={styles.emptyText}>Create your first board to start organizing work.</p>
+          <Button onClick={() => setCreateOpen(true)} iconLeft="+">New board</Button>
+        </div>
       )}
 
       <Dialog

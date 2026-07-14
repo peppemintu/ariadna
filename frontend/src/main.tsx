@@ -17,6 +17,7 @@ import "./styles/global.css";
 
 import { queryClient } from "./lib/queryClient";
 import { CurrentUserProvider } from "./lib/currentUser";
+import { SettingsProvider } from "./lib/settings";
 import { ThemeProvider } from "./lib/theme";
 import { ToastProvider } from "./ui";
 import { App } from "./App";
@@ -26,9 +27,11 @@ createRoot(document.getElementById("root")!).render(
     <ThemeProvider>
       <QueryClientProvider client={queryClient}>
       <CurrentUserProvider>
-        <ToastProvider>
-          <App />
-        </ToastProvider>
+        <SettingsProvider>
+          <ToastProvider>
+            <App />
+          </ToastProvider>
+        </SettingsProvider>
       </CurrentUserProvider>
       </QueryClientProvider>
     </ThemeProvider>

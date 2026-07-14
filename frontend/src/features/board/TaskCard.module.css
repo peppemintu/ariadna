@@ -19,6 +19,14 @@
   font-weight: var(--fw-semibold);
   line-height: var(--leading-snug);
   color: var(--ink-900);
+  overflow-wrap: anywhere;
+}
+/* Optional: clamp long titles to two lines (user setting). */
+.title[data-truncate] {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 .desc {
   margin: 0;
