@@ -1,6 +1,7 @@
 package art.moor.ariadna.service;
 
 import art.moor.ariadna.data.dto.boardColumn.BoardColumnCreateDto;
+import art.moor.ariadna.data.dto.boardColumn.BoardColumnMoveDto;
 import art.moor.ariadna.data.dto.boardColumn.BoardColumnResponseDto;
 import art.moor.ariadna.data.dto.boardColumn.BoardColumnUpdateDto;
 import art.moor.ariadna.data.model.ActionType;
@@ -14,6 +15,7 @@ import art.moor.ariadna.repo.BoardColumnRepository;
 import art.moor.ariadna.repo.BoardRepository;
 import art.moor.ariadna.repo.CardRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -119,8 +121,53 @@ public class BoardColumnService {
         );
     }
 
+    public BoardColumnResponseDto move(UUID id, BoardColumnMoveDto columnMoveDto) {
+        BoardColumn column = getColumn(id);
+
+        if (column.getVersion() != columnMoveDto.version()) {
+            throw new ObjectOptimisticLockingFailureException(Card.class, id);
+        }
+
+        double newPosition = computePosition(columnMoveDto.prevColumnId(), columnMoveDto.nextColumnId());
+
+        column.setPosition(newPosition);
+
+        BoardColumn savedBoardColumn = boardColumnRepository.saveAndFlush(column);
+        BoardColumnResponseDto response = boardColumnMapper.toDto(savedBoardColumn);
+        UUID boardId = savedBoardColumn.getBoard().getId();
+
+        eventPublisher.publishActivityEvent(
+                boardId,
+                savedBoardColumn.getId(),
+                null,
+                ActionType.COLUMN_MOVED,
+                Map.of("title", savedBoardColumn.getTitle())
+        );
+        eventPublisher.publishBoardEvent(
+                boardId,
+                ActionType.COLUMN_MOVED,
+                response
+        );
+
+        return response;
+    }
+
+    private double computePosition(UUID prevColumnId, UUID nextColumnId) {
+        Double prev = prevColumnId == null ? null : getColumn(prevColumnId).getPosition();
+        Double next = nextColumnId == null ? null : getColumn(nextColumnId).getPosition();
+        return midpoint(prev, next);
+    }
+
+    static double midpoint(Double prev, Double next) {
+        if (prev != null && next != null) return (prev + next) / 2.0;
+        if (prev == null && next != null) return next / 2.0;
+        if (prev != null) return prev + POSITION_STEP;
+        return POSITION_STEP;
+    }
+
     private BoardColumn getColumn(UUID id) {
         return boardColumnRepository.findById(id)
                 .orElseThrow(() -> new BoardColumnNotFoundException(id));
     }
+
 }

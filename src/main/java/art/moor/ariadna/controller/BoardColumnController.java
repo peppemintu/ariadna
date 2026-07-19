@@ -1,6 +1,7 @@
 package art.moor.ariadna.controller;
 
 import art.moor.ariadna.data.dto.boardColumn.BoardColumnCreateDto;
+import art.moor.ariadna.data.dto.boardColumn.BoardColumnMoveDto;
 import art.moor.ariadna.data.dto.boardColumn.BoardColumnResponseDto;
 import art.moor.ariadna.data.dto.boardColumn.BoardColumnUpdateDto;
 import art.moor.ariadna.service.BoardColumnService;
@@ -46,6 +47,11 @@ public class BoardColumnController {
             @PathVariable UUID id,
             @Valid @RequestBody BoardColumnUpdateDto request) {
         return boardColumnService.update(id, request);
+    }
+
+    @PatchMapping("/{id}/position")
+    public BoardColumnResponseDto move(@PathVariable UUID id, @Valid @RequestBody BoardColumnMoveDto columnMoveDto) {
+        return boardColumnService.move(id, columnMoveDto);
     }
 
     @DeleteMapping("/api/column/{id}")
