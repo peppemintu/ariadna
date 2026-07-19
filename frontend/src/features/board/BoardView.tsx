@@ -5,21 +5,22 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { DndContext, DragOverlay } from "@dnd-kit/core";
+import { SortableContext, horizontalListSortingStrategy } from "@dnd-kit/sortable";
 import { useBoardFull } from "@/hooks/queries";
 import { useBoardRealtime } from "@/hooks/useBoardRealtime";
-import { useCreateCard, useCreateColumn, useMoveCard } from "@/hooks/mutations";
+import { useCreateCard, useCreateColumn, useMoveCard, useMoveColumn } from "@/hooks/mutations";
 import { ApiError } from "@/api/http";
 import { Button, Tabs, useToast } from "@/ui";
 import type { CardCreate, CardResponse, ColumnWithCards, UserResponse, UUID } from "@/api/types";
 import { BoardHeader } from "./BoardHeader";
 import { BoardToolbar } from "./BoardToolbar";
-import { Column } from "./Column";
+import { Column, ColumnOverlay } from "./Column";
 import { TaskCard } from "./TaskCard";
 import { CardDetail } from "./CardDetail";
 import { ListView } from "./ListView";
 import { ActivityFeed } from "./ActivityFeed";
 import { ColumnComposer } from "./ColumnComposer";
-import { useBoardDnd, type MoveCommit } from "./useBoardDnd";
+import { useBoardDnd, type MoveCommit, type ColumnMoveCommit } from "./useBoardDnd";
 import { useEdgeAutoScroll } from "@/hooks/useEdgeAutoScroll";
 import styles from "./BoardView.module.css";
 
@@ -61,6 +62,21 @@ export function BoardView() {
       }),
   });
 
+  const moveColumn = useMoveColumn(boardId!, {
+    onConflict: () =>
+      toast({
+        title: "Move conflict",
+        description: "Someone reordered this column first. Refreshing the board.",
+        tone: "flare",
+      }),
+    onError: (err) =>
+      toast({
+        title: "Couldn't move the column",
+        description: err instanceof Error ? err.message : "The board will refresh.",
+        tone: "flare",
+      }),
+  });
+
   const dnd = useBoardDnd({
     columns,
     setColumns,
@@ -74,22 +90,31 @@ export function BoardView() {
           version: m.version,
         },
       }),
+    commitColumnMove: (m: ColumnMoveCommit) =>
+      moveColumn.mutate({
+        id: m.columnId,
+        body: {
+          prevColumnId: m.prevColumnId,
+          nextColumnId: m.nextColumnId,
+          version: m.version,
+        },
+      }),
   });
 
   // Hover-to-scroll near the board's left/right edges. Off during a drag, where
   // dnd-kit runs its own auto-scroll.
   const scrollRef = useRef<HTMLDivElement>(null);
-  const activeEdge = useEdgeAutoScroll(scrollRef, { enabled: !dnd.activeCard });
+  const activeEdge = useEdgeAutoScroll(scrollRef, { enabled: !dnd.activeCard && !dnd.activeColumn });
 
   // Re-sync local state whenever the server sends a fresh board, but never
-  // mid-drag (would jump the card) — and crucially not merely because the drag
-  // just ended: we keep the optimistic commit until a fresh board actually
-  // arrives. Guarding via a ref (not a dep) means ending a drag doesn't re-run
-  // this and clobber the local move with stale server data.
-  const activeCardRef = useRef(dnd.activeCard);
-  activeCardRef.current = dnd.activeCard;
+  // mid-drag (would jump the card or column) — and crucially not merely because
+  // the drag just ended: we keep the optimistic commit until a fresh board
+  // actually arrives. Guarding via a ref (not a dep) means ending a drag doesn't
+  // re-run this and clobber the local move with stale server data.
+  const activeDragRef = useRef<boolean>(false);
+  activeDragRef.current = Boolean(dnd.activeCard || dnd.activeColumn);
   useEffect(() => {
-    if (board && !activeCardRef.current) setColumns(board.columns);
+    if (board && !activeDragRef.current) setColumns(board.columns);
   }, [board]);
 
   // Board title in the browser tab.
@@ -136,6 +161,8 @@ export function BoardView() {
   );
 
   const onCardClick = useCallback((card: CardResponse) => setSelectedCardId(card.id), []);
+
+  const columnIds = useMemo(() => columns.map((c) => c.id), [columns]);
 
   if (isLoading) return <Centered>Loading board…</Centered>;
   if (isError) {
@@ -189,19 +216,23 @@ export function BoardView() {
               onDragCancel={dnd.handlers.onDragCancel}
             >
               <div className={styles.row}>
-                {columns.map((col) => (
-                  <Column
-                    key={col.id}
-                    column={col}
-                    membersById={membersById}
-                    onCardClick={onCardClick}
-                  />
-                ))}
+                <SortableContext items={columnIds} strategy={horizontalListSortingStrategy}>
+                  {columns.map((col) => (
+                    <Column
+                      key={col.id}
+                      column={col}
+                      membersById={membersById}
+                      onCardClick={onCardClick}
+                    />
+                  ))}
+                </SortableContext>
                 <ColumnComposer onCreate={onCreateColumn} />
               </div>
 
               <DragOverlay>
-                {dnd.activeCard ? (
+                {dnd.activeColumn ? (
+                  <ColumnOverlay column={dnd.activeColumn} />
+                ) : dnd.activeCard ? (
                   <TaskCard
                     card={dnd.activeCard}
                     assignee={dnd.activeCard.assigneeId ? membersById.get(dnd.activeCard.assigneeId) : undefined}

@@ -19,6 +19,7 @@ export const SortableTaskCard = memo(function SortableTaskCard({ card, assignee,
   const optimistic = isOptimisticId(card.id);
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: card.id,
+    data: { type: "card" },
     disabled: optimistic,
   });
 

@@ -7,6 +7,7 @@ import type {
   BoardColumnCreate,
   BoardColumnResponse,
   BoardColumnUpdate,
+  ColumnMove,
   BoardFull,
   BoardRequest,
   BoardResponse,
@@ -60,6 +61,8 @@ export const columnsApi = {
     http.post<BoardColumnResponse>(`/api/board/${boardId}/column`, b),
   update: (id: UUID, b: BoardColumnUpdate) =>
     http.put<BoardColumnResponse>(`/api/column/${id}`, b),
+  move: (id: UUID, b: ColumnMove) =>
+    http.patch<BoardColumnResponse>(`/api/column/${id}/position`, b),
   remove: (id: UUID) => http.del(`/api/column/${id}`),
 };
 

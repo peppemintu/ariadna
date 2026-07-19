@@ -1,13 +1,13 @@
-// A board column: colored header, title, edit affordance, and sortable cards.
-// When a color is set, the header is painted in that exact shade and the body
-// takes a muted, theme-aware tint of it (see color.ts + Column.module.css).
-// Card creation is handled by the single board-level "Add card" button, so the
-// column header only carries the edit control. Memoised so a drag that rebuilds
-// the columns array only re-renders the columns that actually changed.
+// A board column: drag handle, colored header, title, edit affordance, and
+// sortable cards. Columns themselves are sortable (drag them by the grip in the
+// header only — the rest of the header stays clickable), and each column is also
+// the drop container for cards. When a color is set, the header is painted in
+// that shade and the body takes a muted, theme-aware tint of it.
 
 import { memo, useMemo, useState } from "react";
-import { useDroppable } from "@dnd-kit/core";
-import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
+import { useDndContext } from "@dnd-kit/core";
+import { useSortable, SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 import type { ColumnWithCards, CardResponse, UserResponse, UUID } from "@/api/types";
 import { columnColorVars, normalizeHex } from "@/lib/color";
 import { SortableTaskCard } from "./SortableTaskCard";
@@ -20,15 +20,62 @@ interface ColumnProps {
   onCardClick?: (card: CardResponse) => void;
 }
 
+const GripIcon = () => (
+  <svg viewBox="0 0 16 16" width="14" height="14" fill="currentColor" aria-hidden>
+    <circle cx="5" cy="3" r="1.4" /><circle cx="11" cy="3" r="1.4" />
+    <circle cx="5" cy="8" r="1.4" /><circle cx="11" cy="8" r="1.4" />
+    <circle cx="5" cy="13" r="1.4" /><circle cx="11" cy="13" r="1.4" />
+  </svg>
+);
+
 export const Column = memo(function Column({ column, membersById, onCardClick }: ColumnProps) {
-  const { setNodeRef, isOver } = useDroppable({ id: column.id });
   const [editing, setEditing] = useState(false);
   const colored = normalizeHex(column.color) !== null;
   const cardIds = useMemo(() => column.cards.map((c) => c.id), [column.cards]);
 
+  const {
+    setNodeRef,
+    setActivatorNodeRef,
+    attributes,
+    listeners,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: column.id, data: { type: "column" } });
+
+  // Highlight the body only when a *card* is being dragged over this column
+  // (not while reordering columns). Resolve via the live drag context.
+  const { active, over } = useDndContext();
+  const draggingCard = active?.data.current?.type === "card";
+  const cardOverHere =
+    draggingCard && (over?.id === column.id || column.cards.some((c) => c.id === over?.id));
+
+  const style = {
+    ...columnColorVars(column.color),
+    transform: CSS.Translate.toString(transform),
+    transition,
+    opacity: isDragging ? 0.4 : 1,
+  };
+
   return (
-    <section className={styles.column} style={columnColorVars(column.color)} data-colored={colored ? "" : undefined}>
+    <section
+      ref={setNodeRef}
+      className={styles.column}
+      style={style}
+      data-colored={colored ? "" : undefined}
+      data-dragging={isDragging ? "" : undefined}
+    >
       <header className={styles.head}>
+        <button
+          ref={setActivatorNodeRef}
+          className={styles.grip}
+          aria-label={`Reorder column ${column.title}`}
+          title="Drag to reorder"
+          {...attributes}
+          {...listeners}
+        >
+          <GripIcon />
+        </button>
         <h3 className={styles.title}>{column.title}</h3>
         <button
           className={styles.headBtn}
@@ -42,7 +89,7 @@ export const Column = memo(function Column({ column, membersById, onCardClick }:
         </button>
       </header>
 
-      <div ref={setNodeRef} className={styles.body} data-scroll data-over={isOver ? "" : undefined}>
+      <div className={styles.body} data-scroll data-over={cardOverHere ? "" : undefined}>
         <SortableContext items={cardIds} strategy={verticalListSortingStrategy}>
           {column.cards.length === 0 ? (
             <div className={styles.empty}>Drop here</div>
@@ -63,3 +110,25 @@ export const Column = memo(function Column({ column, membersById, onCardClick }:
     </section>
   );
 });
+
+/** Presentational preview shown in the DragOverlay while a column is dragged. */
+export function ColumnOverlay({ column }: { column: ColumnWithCards }) {
+  const colored = normalizeHex(column.color) !== null;
+  const count = column.cards.length;
+  return (
+    <section
+      className={styles.column}
+      style={columnColorVars(column.color)}
+      data-colored={colored ? "" : undefined}
+      data-overlay=""
+    >
+      <header className={styles.head}>
+        <span className={styles.grip} aria-hidden><GripIcon /></span>
+        <h3 className={styles.title}>{column.title}</h3>
+      </header>
+      <div className={styles.body}>
+        <div className={styles.empty}>{count} {count === 1 ? "card" : "cards"}</div>
+      </div>
+    </section>
+  );
+}

@@ -9,6 +9,7 @@ import { qk } from "@/lib/queryClient";
 import type {
   BoardColumnCreate,
   BoardColumnUpdate,
+  ColumnMove,
   BoardFull,
   CardAssign,
   CardCreate,
@@ -139,6 +140,26 @@ export function useUpdateColumn(boardId: UUID) {
   return useMutation({
     mutationFn: ({ id, body }: { id: UUID; body: BoardColumnUpdate }) =>
       columnsApi.update(id, body),
+    onSettled: invalidate,
+  });
+}
+
+/**
+ * Move a column. Mirrors card moves: the backend derives the fractional
+ * position from the prev/next column ids and version-checks for conflicts.
+ * `onConflict` fires on a 409 (someone else reordered it first).
+ */
+export function useMoveColumn(
+  boardId: UUID,
+  opts?: { onConflict?: () => void; onError?: (err: unknown) => void },
+) {
+  const invalidate = useBoardInvalidation(boardId);
+  return useMutation({
+    mutationFn: ({ id, body }: { id: UUID; body: ColumnMove }) => columnsApi.move(id, body),
+    onError: (err) => {
+      if (err instanceof ApiError && err.isConflict) opts?.onConflict?.();
+      else opts?.onError?.(err);
+    },
     onSettled: invalidate,
   });
 }

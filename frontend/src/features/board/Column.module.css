@@ -94,3 +94,38 @@
 .headBtn:hover { transform: translate(-1px, -1px); box-shadow: var(--shadow-md); background: var(--signal-100); }
 .headBtn:active { transform: var(--press-translate); box-shadow: var(--shadow-press); }
 .headBtn svg { display: block; }
+
+/* Drag handle — the only place a column can be grabbed from. Deliberately small
+   and clearly a grip; cursor + hover telegraph that it's draggable. */
+.grip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 26px;
+  flex: 0 0 auto;
+  margin-left: -2px;
+  padding: 0;
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-sm);
+  color: var(--ink-500);
+  cursor: grab;
+  touch-action: none;
+  transition: color var(--dur-fast) var(--ease-out), background var(--dur-fast) var(--ease-out);
+}
+.grip:hover { color: var(--ink-900); background: color-mix(in srgb, var(--ink-900) 10%, transparent); }
+.grip:active { cursor: grabbing; }
+.grip:focus-visible { outline: var(--border-line) solid var(--signal-500); outline-offset: 1px; }
+.column[data-colored] .grip { color: color-mix(in srgb, var(--col-on-accent) 70%, transparent); }
+.column[data-colored] .grip:hover { color: var(--col-on-accent); background: color-mix(in srgb, var(--col-on-accent) 16%, transparent); }
+.grip svg { display: block; }
+
+/* While its overlay follows the cursor, the source column sits dimmed (opacity
+   set inline). The floating overlay gets a heavier shadow and a slight tilt. */
+.column[data-overlay] {
+  box-shadow: var(--shadow-lg);
+  transform: rotate(-1.5deg);
+  cursor: grabbing;
+}
+.column[data-overlay] .grip { cursor: grabbing; }

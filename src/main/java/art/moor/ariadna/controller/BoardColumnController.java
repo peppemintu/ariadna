@@ -49,7 +49,7 @@ public class BoardColumnController {
         return boardColumnService.update(id, request);
     }
 
-    @PatchMapping("/{id}/position")
+    @PatchMapping("/api/column/{id}/position")
     public BoardColumnResponseDto move(@PathVariable UUID id, @Valid @RequestBody BoardColumnMoveDto columnMoveDto) {
         return boardColumnService.move(id, columnMoveDto);
     }

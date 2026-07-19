@@ -72,6 +72,11 @@ export interface BoardColumnUpdate {
   title: string;
   color?: string | null;
 }
+export interface ColumnMove {
+  prevColumnId: UUID | null;
+  nextColumnId: UUID | null;
+  version: number; // optimistic lock
+}
 
 // ---- Card ----
 export interface CardResponse {
