@@ -31,6 +31,12 @@ public class UserService {
     }
 
     @Transactional(readOnly = true)
+    public UserResponseDto getMe(String email) {
+        User user = userRepository.findByEmail(email).orElseThrow(UserNotFoundException::new);
+        return userMapper.toDto(user);
+    }
+
+    @Transactional(readOnly = true)
     public UserResponseDto getById(UUID id) {
         return userMapper.toDto(getUser(id));
     }

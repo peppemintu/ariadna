@@ -50,7 +50,7 @@ public class BoardUserRepositoryTest extends IntegrationTestBase {
         BoardUser savedBoardUser = boardUserRepository.save(boardUser);
 
         Optional<BoardUser> assignee =
-                boardUserRepository.findByIdAndBoardId(savedBoardUser.getId(), savedBoardA.getId());
+                boardUserRepository.findByUserIdAndBoardId(savedBoardUser.getId(), savedBoardA.getId());
 
         assertThat(assignee).isEmpty();
     }
@@ -74,7 +74,7 @@ public class BoardUserRepositoryTest extends IntegrationTestBase {
         BoardUser saved = boardUserRepository.save(boardUser);
 
         Optional<BoardUser> found =
-                boardUserRepository.findByIdAndBoardId(saved.getId(), savedBoard.getId());
+                boardUserRepository.findByUserIdAndBoardId(saved.getId(), savedBoard.getId());
 
         assertThat(found).contains(saved);
     }
