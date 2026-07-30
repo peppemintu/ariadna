@@ -32,7 +32,8 @@ export const authApi = {
 };
 
 export const usersApi = {
-  list: () => http.get<UserResponse[]>("/api/user"),
+  list: () => http.get<UserResponse[]>("/api/user"), // ADMIN-only on the backend
+  me: () => http.get<UserResponse>("/api/user/me"),
   get: (id: UUID) => http.get<UserResponse>(`/api/user/${id}`),
   create: (b: UserCreateRequest) => http.post<UserResponse>("/api/user", b),
   update: (id: UUID, b: UserUpdateRequest) =>

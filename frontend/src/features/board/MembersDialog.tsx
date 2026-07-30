@@ -1,11 +1,14 @@
-// Manage board members: add from the global user list, remove existing ones.
-// Members drive the assignee picker and avatar resolution across the board.
-// NB: removal calls the pair-delete endpoint the backend still needs to add.
+// Manage board members. The member list comes from the board aggregate
+// (board/full). Adding a member needs the global user list, which is ADMIN-only
+// on the backend, so the "add" picker is shown to admins only; everyone else
+// just sees the current members. Members drive the assignee picker and avatar
+// resolution across the board.
 
 import { useState } from "react";
 import { Avatar, Badge, Button, Dialog, Select, useToast } from "@/ui";
 import { useUsers } from "@/hooks/queries";
 import { useAddBoardMember, useRemoveBoardMember } from "@/hooks/mutations";
+import { useCurrentUser } from "@/lib/currentUser";
 import type { BoardFull, UUID } from "@/api/types";
 import styles from "./MembersDialog.module.css";
 
@@ -17,7 +20,10 @@ interface Props {
 
 export function MembersDialog({ board, open, onClose }: Props) {
   const { toast } = useToast();
-  const { data: users } = useUsers({ enabled: open });
+  const { user: me } = useCurrentUser();
+  const isAdmin = me?.role === "ADMIN";
+  // The candidate list (all users) is ADMIN-only, so only fetch it for admins.
+  const { data: users } = useUsers({ enabled: open && isAdmin });
   const add = useAddBoardMember(board.id);
   const remove = useRemoveBoardMember(board.id);
   const [picked, setPicked] = useState<string>("");
@@ -56,20 +62,22 @@ export function MembersDialog({ board, open, onClose }: Props) {
   return (
     <Dialog open={open} onOpenChange={(o) => !o && onClose()} title="Members" width={480}>
       <div className={styles.wrap}>
-        <div className={styles.addRow}>
-          <div className={styles.addSelect}>
-            <Select
-              placeholder={candidates.length ? "Pick a user…" : "Everyone's already here"}
-              value={picked}
-              onChange={setPicked}
-              options={candidates.map((u) => ({ value: u.id, label: `${u.name} — ${u.email}` }))}
-              disabled={candidates.length === 0}
-            />
+        {isAdmin && (
+          <div className={styles.addRow}>
+            <div className={styles.addSelect}>
+              <Select
+                placeholder={candidates.length ? "Pick a user…" : "Everyone's already here"}
+                value={picked}
+                onChange={setPicked}
+                options={candidates.map((u) => ({ value: u.id, label: `${u.name} — ${u.email}` }))}
+                disabled={candidates.length === 0}
+              />
+            </div>
+            <Button onClick={handleAdd} disabled={!picked || add.isPending}>
+              {add.isPending ? "Adding…" : "Add"}
+            </Button>
           </div>
-          <Button onClick={handleAdd} disabled={!picked || add.isPending}>
-            {add.isPending ? "Adding…" : "Add"}
-          </Button>
-        </div>
+        )}
 
         {board.members.length === 0 ? (
           <p className={styles.empty}>

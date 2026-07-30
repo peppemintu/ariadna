@@ -6,6 +6,9 @@ import { activityApi, boardUsersApi, boardsApi, usersApi } from "@/api/endpoints
 import { qk } from "@/lib/queryClient";
 import type { UUID } from "@/api/types";
 
+/** All users. NB: GET /api/user is ADMIN-only on the backend — only call this
+ *  from admin-gated UI (pass `enabled` accordingly). For the current user use
+ *  the currentUser context (/me); for a board's people use board/full members. */
 export function useUsers(options?: { enabled?: boolean }) {
   return useQuery({
     queryKey: qk.users,
