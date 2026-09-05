@@ -17,6 +17,8 @@ export function BoardMenu({ board, onOpenMembers }: Props) {
   const { toast } = useToast();
   const rename = useRenameBoard(board.id);
   const del = useDeleteBoard();
+  const canEdit = board.myAccess.permissions.includes("EDIT_CARDS");
+  const isOwner = board.myAccess.owner;
 
   const [renameOpen, setRenameOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
@@ -69,9 +71,9 @@ export function BoardMenu({ board, onOpenMembers }: Props) {
           </Button>
         }
         items={[
-          { label: "Rename board", onSelect: () => setRenameOpen(true) },
+          ...(canEdit ? [{ label: "Rename board", onSelect: () => setRenameOpen(true) }] : []),
           { label: "Members…", onSelect: onOpenMembers },
-          { label: "Delete board", danger: true, onSelect: () => setDeleteOpen(true) },
+          ...(isOwner ? [{ label: "Delete board", danger: true, onSelect: () => setDeleteOpen(true) }] : []),
         ]}
       />
 

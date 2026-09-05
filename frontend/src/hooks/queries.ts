@@ -2,7 +2,7 @@
 // touch fetch/query-keys directly. Mutations live separately (added in step 5).
 
 import { useQuery } from "@tanstack/react-query";
-import { activityApi, boardUsersApi, boardsApi, usersApi } from "@/api/endpoints";
+import { activityApi, boardRolesApi, boardsApi, invitationsApi, usersApi } from "@/api/endpoints";
 import { qk } from "@/lib/queryClient";
 import type { UUID } from "@/api/types";
 
@@ -17,17 +17,9 @@ export function useUsers(options?: { enabled?: boolean }) {
   });
 }
 
+/** Boards the current user is a member of — the backend self-scopes this. */
 export function useBoards() {
   return useQuery({ queryKey: qk.boards, queryFn: boardsApi.list });
-}
-
-/** Boards the given user is a member of (via BoardUser links). */
-export function useMyBoards(userId: UUID | undefined, enabled = true) {
-  return useQuery({
-    queryKey: userId ? qk.boardsByUser(userId) : ["boards", "user", "nil"],
-    queryFn: () => boardUsersApi.boardsByUser(userId!),
-    enabled: Boolean(userId) && enabled,
-  });
 }
 
 /** Full board aggregate — board + members + columns with nested cards. */
@@ -44,6 +36,25 @@ export function useActivity(boardId: UUID | undefined, options?: { enabled?: boo
   return useQuery({
     queryKey: boardId ? qk.activity(boardId) : ["board", "activity", "nil"],
     queryFn: () => activityApi.byBoard(boardId!),
+    enabled: Boolean(boardId) && (options?.enabled ?? true),
+  });
+}
+
+/** Named permission-bundle presets for the "grant a role" UI. */
+export function useBoardRoles() {
+  return useQuery({ queryKey: qk.boardRoles, queryFn: boardRolesApi.list, staleTime: Infinity });
+}
+
+/** Invitations addressed to the current user, pending a response. */
+export function usePendingInvitations() {
+  return useQuery({ queryKey: qk.invitations, queryFn: invitationsApi.mine });
+}
+
+/** Invitations a board has sent that are still awaiting a response. */
+export function useBoardInvitations(boardId: UUID | undefined, options?: { enabled?: boolean }) {
+  return useQuery({
+    queryKey: boardId ? qk.boardInvitations(boardId) : ["board", "invitations", "nil"],
+    queryFn: () => invitationsApi.pendingForBoard(boardId!),
     enabled: Boolean(boardId) && (options?.enabled ?? true),
   });
 }

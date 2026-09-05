@@ -3,12 +3,12 @@
 
 import { Avatar, Badge } from "@/ui";
 import { formatDeadline, isOverdue } from "@/lib/format";
-import type { CardResponse, ColumnWithCards, UserResponse, UUID } from "@/api/types";
+import type { CardResponse, ColumnWithCards, BoardMember, UUID } from "@/api/types";
 import styles from "./ListView.module.css";
 
 interface Props {
   columns: ColumnWithCards[];
-  membersById: Map<UUID, UserResponse>;
+  membersById: Map<UUID, BoardMember>;
   onCardClick: (card: CardResponse) => void;
 }
 

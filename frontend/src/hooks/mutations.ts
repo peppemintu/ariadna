@@ -3,12 +3,13 @@
 // Card creation is optimistic: the card appears instantly and rolls back on error.
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { boardUsersApi, boardsApi, cardsApi, columnsApi, usersApi } from "@/api/endpoints";
+import { boardUsersApi, boardsApi, cardsApi, columnsApi, invitationsApi, usersApi } from "@/api/endpoints";
 import { ApiError } from "@/api/http";
 import { qk } from "@/lib/queryClient";
 import type {
   BoardColumnCreate,
   BoardColumnUpdate,
+  BoardPermission,
   ColumnMove,
   BoardFull,
   CardAssign,
@@ -176,28 +177,11 @@ export function useDeleteColumn(boardId: UUID) {
 // Board mutations are NOT broadcast over WS (no BOARD_* action types), so other
 // clients only learn about them on their next refetch.
 
-/**
- * Create a board and make the creator its first member — the backend has no
- * auth, so "creator" is just the current user passed from the client, added in
- * a second call. If that membership call fails, we roll back the now-orphaned
- * board (with no "all boards" view it would otherwise vanish from sight).
- * A backend that did both in one transaction would be cleaner; see the note in
- * the chat.
- */
+/** Create a board — the backend makes the caller its owner in the same transaction. */
 export function useCreateBoard() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async ({ title, userId }: { title: string; userId: UUID }) => {
-      const board = await boardsApi.create({ title });
-      try {
-        await boardUsersApi.add(board.id, userId);
-      } catch (err) {
-        await boardsApi.remove(board.id).catch(() => {});
-        throw err;
-      }
-      return board;
-    },
-    // Prefix ["boards"] catches both the full list and per-user lists.
+    mutationFn: (title: string) => boardsApi.create({ title }),
     onSuccess: () => qc.invalidateQueries({ queryKey: qk.boards }),
   });
 }
@@ -223,26 +207,51 @@ export function useDeleteBoard() {
 
 /* ------------------------------- members ------------------------------ */
 
-export function useAddBoardMember(boardId: UUID) {
+/** Invite a user by email — only visible/callable when myAccess has MANAGE_MEMBERS. */
+export function useInviteMember(boardId: UUID) {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (userId: UUID) => boardUsersApi.add(boardId, userId),
+    mutationFn: (email: string) => invitationsApi.invite(boardId, { email }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: qk.boardInvitations(boardId) }),
+  });
+}
+
+export function useUpdateMemberPermissions(boardId: UUID) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ boardUserId, permissions }: { boardUserId: UUID; permissions: BoardPermission[] }) =>
+      boardUsersApi.updatePermissions(boardUserId, permissions),
+    onSuccess: () => qc.invalidateQueries({ queryKey: qk.boardFull(boardId) }),
+  });
+}
+
+export function useRemoveBoardMember(boardId: UUID) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (boardUserId: UUID) => boardUsersApi.remove(boardUserId),
+    onSuccess: () => qc.invalidateQueries({ queryKey: qk.boardFull(boardId) }),
+  });
+}
+
+/* ----------------------------- invitations ----------------------------- */
+// Accept/decline act on invitations addressed to me, not board-scoped.
+
+export function useAcceptInvitation() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: UUID) => invitationsApi.accept(id),
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: qk.boardFull(boardId) });
-      qc.invalidateQueries({ queryKey: qk.boards }); // per-user board lists
+      qc.invalidateQueries({ queryKey: qk.invitations });
+      qc.invalidateQueries({ queryKey: qk.boards });
     },
   });
 }
 
-/** Requires the pair-delete endpoint on the backend (see endpoints.ts note). */
-export function useRemoveBoardMember(boardId: UUID) {
+export function useDeclineInvitation() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (userId: UUID) => boardUsersApi.removeByPair(boardId, userId),
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: qk.boardFull(boardId) });
-      qc.invalidateQueries({ queryKey: qk.boards });
-    },
+    mutationFn: (id: UUID) => invitationsApi.decline(id),
+    onSuccess: () => qc.invalidateQueries({ queryKey: qk.invitations }),
   });
 }
 

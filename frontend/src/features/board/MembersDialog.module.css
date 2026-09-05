@@ -15,3 +15,4 @@
 .text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
 .name { font-family: var(--font-display); font-size: var(--text-sm); font-weight: var(--fw-semibold); color: var(--ink-900); }
 .email { font-family: var(--font-mono); font-size: var(--text-2xs); color: var(--ink-300); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.permissions { display: flex; align-items: center; gap: var(--space-3); flex-shrink: 0; }

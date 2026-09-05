@@ -11,7 +11,7 @@ import { useEffect, useRef, useState } from "react";
 import { Button, Dialog, Input, RichTextEditor, Select } from "@/ui";
 import { fromDatetimeLocalValue } from "@/lib/format";
 import { useSettings } from "@/lib/settings";
-import type { CardCreate, ColumnWithCards, UserResponse, UUID } from "@/api/types";
+import type { CardCreate, ColumnWithCards, BoardMember, UUID } from "@/api/types";
 import styles from "./QuickAddCardDialog.module.css";
 
 const UNASSIGNED = "__unassigned__";
@@ -19,7 +19,7 @@ const UNASSIGNED = "__unassigned__";
 interface Props {
   boardId: UUID;
   columns: ColumnWithCards[];
-  members: UserResponse[];
+  members: BoardMember[];
   open: boolean;
   onClose: () => void;
   onCreate: (columnId: UUID, body: CardCreate) => void;

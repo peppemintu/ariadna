@@ -4,15 +4,16 @@
 // (e.g. the Russian "с" sits on the same key).
 
 import { useEffect, useState } from "react";
-import type { CardCreate, ColumnWithCards, UserResponse, UUID } from "@/api/types";
+import type { CardCreate, ColumnWithCards, BoardMember, UUID } from "@/api/types";
 import { QuickAddCardDialog } from "./QuickAddCardDialog";
 import styles from "./BoardToolbar.module.css";
 
 interface Props {
   boardId: UUID;
   columns: ColumnWithCards[];
-  members: UserResponse[];
+  members: BoardMember[];
   onCreateCard: (columnId: UUID, body: CardCreate) => void;
+  canEdit: boolean;
 }
 
 function isTypingTarget(el: EventTarget | null): boolean {
@@ -21,13 +22,14 @@ function isTypingTarget(el: EventTarget | null): boolean {
   return tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT" || el.isContentEditable;
 }
 
-export function BoardToolbar({ boardId, columns, members, onCreateCard }: Props) {
+export function BoardToolbar({ boardId, columns, members, onCreateCard, canEdit }: Props) {
   const [open, setOpen] = useState(false);
 
   // Global shortcut — ignored while typing, using modifiers, or already open.
   // `e.code === "KeyC"` is layout-independent (fires on the physical C key
   // regardless of QWERTY/ЙЦУКЕН), unlike `e.key` which is the typed character.
   useEffect(() => {
+    if (!canEdit) return;
     const onKey = (e: KeyboardEvent) => {
       if (e.metaKey || e.ctrlKey || e.altKey) return;
       if (open || isTypingTarget(e.target)) return;
@@ -38,7 +40,9 @@ export function BoardToolbar({ boardId, columns, members, onCreateCard }: Props)
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [open]);
+  }, [open, canEdit]);
+
+  if (!canEdit) return null;
 
   return (
     <>

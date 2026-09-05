@@ -42,12 +42,32 @@ export interface UserUpdateRequest {
   name: string;
 }
 
+// ---- Board permissions ----
+// Atomic, grantable board capabilities. Backend is the source of truth for
+// what a role grants (GET /api/board-roles) — never hardcode a role's
+// permission set on the frontend.
+export type BoardPermission = "EDIT_CARDS" | "MANAGE_MEMBERS";
+
+/** The caller's own rights on a board — read every check off this, never
+ *  recompute "am I the owner/can I edit" from raw member lists. */
+export interface BoardMyAccess {
+  owner: boolean;
+  permissions: BoardPermission[];
+}
+
+export interface BoardRoleResponse {
+  name: string;
+  permissions: BoardPermission[];
+}
+
 // ---- Board ----
 export interface BoardResponse {
   id: UUID;
   title: string;
+  ownerId: UUID;
   createdAt: Instant;
   updatedAt: Instant;
+  myAccess: BoardMyAccess;
 }
 export interface BoardRequest {
   title: string; // max 255
@@ -119,6 +139,40 @@ export interface BoardUserResponse {
   id: UUID;
   boardId: UUID;
   userId: UUID;
+  owner: boolean;
+  permissions: BoardPermission[];
+}
+
+/** A board member for list rendering: identity + rights in one shape. `id` is
+ *  the USER id (matches UserResponse.id — assignee pickers/avatars key off it
+ *  everywhere); `boardUserId` is the membership row id, the target for
+ *  permission changes or removal. */
+export interface BoardMember {
+  id: UUID;
+  boardUserId: UUID;
+  name: string;
+  email: string;
+  owner: boolean;
+  permissions: BoardPermission[];
+}
+
+// ---- Invitations ----
+export type InvitationStatus = "PENDING" | "ACCEPTED" | "DECLINED";
+
+export interface InvitationCreateRequest {
+  email: string;
+}
+
+export interface InvitationResponse {
+  id: UUID;
+  boardId: UUID;
+  boardTitle: string;
+  invitedEmail: string;
+  invitedById: UUID;
+  invitedByName: string;
+  status: InvitationStatus;
+  createdAt: Instant;
+  respondedAt: Instant | null;
 }
 
 // ---- Activity ----
@@ -139,15 +193,17 @@ export interface BoardMessage {
   payload: unknown; // shape depends on `type` (usually a CardResponse / column id)
 }
 
-// ---- Aggregate (backend endpoint TO BE ADDED: GET /api/board/{id}/full) ----
+// ---- Aggregate ----
 export interface ColumnWithCards extends BoardColumnResponse {
   cards: CardResponse[];
 }
 export interface BoardFull {
   id: UUID;
   title: string;
+  ownerId: UUID;
   createdAt: Instant;
   updatedAt: Instant;
-  members: UserResponse[];
+  myAccess: BoardMyAccess;
+  members: BoardMember[];
   columns: ColumnWithCards[];
 }

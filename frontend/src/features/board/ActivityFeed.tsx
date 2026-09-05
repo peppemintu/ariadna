@@ -5,12 +5,12 @@ import { useActivity } from "@/hooks/queries";
 import { Avatar, Badge } from "@/ui";
 import { formatRelativeTime } from "@/lib/format";
 import { activityMeta, payloadTitle } from "./activityText";
-import type { UserResponse, UUID } from "@/api/types";
+import type { BoardMember, UUID } from "@/api/types";
 import styles from "./ActivityFeed.module.css";
 
 interface Props {
   boardId: UUID;
-  membersById: Map<UUID, UserResponse>;
+  membersById: Map<UUID, BoardMember>;
   active: boolean;
 }
 

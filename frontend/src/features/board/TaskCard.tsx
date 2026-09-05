@@ -3,7 +3,7 @@
 
 import { memo } from "react";
 import { Avatar, Badge } from "@/ui";
-import type { CardResponse, UserResponse } from "@/api/types";
+import type { CardResponse, BoardMember } from "@/api/types";
 import { formatDeadline, isOverdue } from "@/lib/format";
 import { stripMarkdown } from "@/lib/richText";
 import { useSettings } from "@/lib/settings";
@@ -11,7 +11,7 @@ import styles from "./TaskCard.module.css";
 
 interface TaskCardProps {
   card: CardResponse;
-  assignee?: UserResponse;
+  assignee?: BoardMember;
   onClick?: (card: CardResponse) => void;
 }
 

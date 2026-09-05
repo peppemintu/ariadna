@@ -9,8 +9,10 @@ import type {
   BoardColumnUpdate,
   ColumnMove,
   BoardFull,
+  BoardPermission,
   BoardRequest,
   BoardResponse,
+  BoardRoleResponse,
   AuthResponse,
   BoardUserResponse,
   CardAssign,
@@ -18,6 +20,8 @@ import type {
   CardMove,
   CardResponse,
   CardUpdate,
+  InvitationCreateRequest,
+  InvitationResponse,
   LoginRequest,
   UserCreateRequest,
   UserResponse,
@@ -49,14 +53,18 @@ export const usersApi = {
 };
 
 export const boardsApi = {
+  // Only boards the caller is a member of — the backend self-scopes this.
   list: () => http.get<BoardResponse[]>("/api/board"),
   get: (id: UUID) => http.get<BoardResponse>(`/api/board/${id}`),
-  // TO BE ADDED on the backend: GET /api/board/{id}/full
   getFull: (id: UUID) => http.get<BoardFull>(`/api/board/${id}/full`),
   create: (b: BoardRequest) => http.post<BoardResponse>("/api/board", b),
   update: (id: UUID, b: BoardRequest) =>
     http.put<BoardResponse>(`/api/board/${id}`, b),
   remove: (id: UUID) => http.del(`/api/board/${id}`),
+};
+
+export const boardRolesApi = {
+  list: () => http.get<BoardRoleResponse[]>("/api/board-roles"),
 };
 
 export const columnsApi = {
@@ -87,18 +95,22 @@ export const cardsApi = {
   remove: (id: UUID) => http.del(`/api/card/${id}`),
 };
 
+// Membership by its own id — adding a member happens only via invitations
+// (invitationsApi below), never directly by user id.
 export const boardUsersApi = {
-  add: (boardId: UUID, userId: UUID) =>
-    http.post<BoardUserResponse>(`/api/boardUser/board/${boardId}/user/${userId}`),
-  usersByBoard: (boardId: UUID) =>
-    http.get<UserResponse[]>(`/api/boardUser/board/${boardId}/users`),
-  boardsByUser: (userId: UUID) =>
-    http.get<BoardResponse[]>(`/api/boardUser/boards/user/${userId}`),
-  remove: (id: UUID) => http.del(`/api/boardUser/${id}`),
-  // TO BE ADDED on the backend: DELETE /api/boardUser/board/{b}/user/{u}.
-  // The existing DELETE needs the link id, which no endpoint exposes.
-  removeByPair: (boardId: UUID, userId: UUID) =>
-    http.del(`/api/boardUser/board/${boardId}/user/${userId}`),
+  updatePermissions: (boardUserId: UUID, permissions: BoardPermission[]) =>
+    http.patch<BoardUserResponse>(`/api/boardUser/${boardUserId}`, { permissions }),
+  remove: (boardUserId: UUID) => http.del(`/api/boardUser/${boardUserId}`),
+};
+
+export const invitationsApi = {
+  invite: (boardId: UUID, b: InvitationCreateRequest) =>
+    http.post<InvitationResponse>(`/api/board/${boardId}/invitations`, b),
+  pendingForBoard: (boardId: UUID) =>
+    http.get<InvitationResponse[]>(`/api/board/${boardId}/invitations`),
+  mine: () => http.get<InvitationResponse[]>("/api/invitations/me"),
+  accept: (id: UUID) => http.post<BoardUserResponse>(`/api/invitations/${id}/accept`),
+  decline: (id: UUID) => http.post<void>(`/api/invitations/${id}/decline`),
 };
 
 export const activityApi = {

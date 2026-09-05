@@ -11,7 +11,7 @@ import { useBoardRealtime } from "@/hooks/useBoardRealtime";
 import { useCreateCard, useCreateColumn, useMoveCard, useMoveColumn } from "@/hooks/mutations";
 import { ApiError } from "@/api/http";
 import { Button, Tabs, useToast } from "@/ui";
-import type { CardCreate, CardResponse, ColumnWithCards, UserResponse, UUID } from "@/api/types";
+import type { CardCreate, CardResponse, ColumnWithCards, BoardMember, UUID } from "@/api/types";
 import { BoardHeader } from "./BoardHeader";
 import { BoardToolbar } from "./BoardToolbar";
 import { Column, ColumnOverlay } from "./Column";
@@ -126,7 +126,7 @@ export function BoardView() {
   }, [board?.title]);
 
   const membersById = useMemo(() => {
-    const map = new Map<UUID, UserResponse>();
+    const map = new Map<UUID, BoardMember>();
     board?.members.forEach((m) => map.set(m.id, m));
     return map;
   }, [board]);
@@ -180,6 +180,8 @@ export function BoardView() {
   }
   if (!board) return null;
 
+  const canEdit = board.myAccess.permissions.includes("EDIT_CARDS");
+
   return (
     <div className={styles.screen}>
       <BoardHeader board={board} live={connected} />
@@ -190,6 +192,7 @@ export function BoardView() {
           columns={columns}
           members={board.members}
           onCreateCard={onCreateCard}
+          canEdit={canEdit}
         />
         <Tabs
           value={tab}
@@ -223,10 +226,11 @@ export function BoardView() {
                       column={col}
                       membersById={membersById}
                       onCardClick={onCardClick}
+                      canEdit={canEdit}
                     />
                   ))}
                 </SortableContext>
-                <ColumnComposer onCreate={onCreateColumn} />
+                {canEdit && <ColumnComposer onCreate={onCreateColumn} />}
               </div>
 
               <DragOverlay>
@@ -260,6 +264,7 @@ export function BoardView() {
         card={selectedCard}
         boardId={board.id}
         members={board.members}
+        canEdit={canEdit}
         onClose={() => setSelectedCardId(null)}
       />
     </div>

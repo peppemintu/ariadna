@@ -8,7 +8,7 @@ import { memo, useMemo, useState } from "react";
 import { useDndContext } from "@dnd-kit/core";
 import { useSortable, SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import type { ColumnWithCards, CardResponse, UserResponse, UUID } from "@/api/types";
+import type { ColumnWithCards, CardResponse, BoardMember, UUID } from "@/api/types";
 import { columnColorVars, normalizeHex } from "@/lib/color";
 import { SortableTaskCard } from "./SortableTaskCard";
 import { ColumnEditDialog } from "./ColumnEditDialog";
@@ -16,8 +16,9 @@ import styles from "./Column.module.css";
 
 interface ColumnProps {
   column: ColumnWithCards;
-  membersById: Map<UUID, UserResponse>;
+  membersById: Map<UUID, BoardMember>;
   onCardClick?: (card: CardResponse) => void;
+  canEdit: boolean;
 }
 
 const GripIcon = () => (
@@ -28,7 +29,7 @@ const GripIcon = () => (
   </svg>
 );
 
-export const Column = memo(function Column({ column, membersById, onCardClick }: ColumnProps) {
+export const Column = memo(function Column({ column, membersById, onCardClick, canEdit }: ColumnProps) {
   const [editing, setEditing] = useState(false);
   const colored = normalizeHex(column.color) !== null;
   const cardIds = useMemo(() => column.cards.map((c) => c.id), [column.cards]);
@@ -41,7 +42,7 @@ export const Column = memo(function Column({ column, membersById, onCardClick }:
     transform,
     transition,
     isDragging,
-  } = useSortable({ id: column.id, data: { type: "column" } });
+  } = useSortable({ id: column.id, data: { type: "column" }, disabled: !canEdit });
 
   // Highlight the body only when a *card* is being dragged over this column
   // (not while reordering columns). Resolve via the live drag context.
@@ -66,27 +67,31 @@ export const Column = memo(function Column({ column, membersById, onCardClick }:
       data-dragging={isDragging ? "" : undefined}
     >
       <header className={styles.head}>
-        <button
-          ref={setActivatorNodeRef}
-          className={styles.grip}
-          aria-label={`Reorder column ${column.title}`}
-          title="Drag to reorder"
-          {...attributes}
-          {...listeners}
-        >
-          <GripIcon />
-        </button>
+        {canEdit && (
+          <button
+            ref={setActivatorNodeRef}
+            className={styles.grip}
+            aria-label={`Reorder column ${column.title}`}
+            title="Drag to reorder"
+            {...attributes}
+            {...listeners}
+          >
+            <GripIcon />
+          </button>
+        )}
         <h3 className={styles.title}>{column.title}</h3>
-        <button
-          className={styles.headBtn}
-          onClick={() => setEditing(true)}
-          aria-label={`Edit column ${column.title}`}
-          title="Edit column"
-        >
-          <svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor" aria-hidden>
-            <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04a.996.996 0 0 0 0-1.41l-2.34-2.34a.996.996 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z" />
-          </svg>
-        </button>
+        {canEdit && (
+          <button
+            className={styles.headBtn}
+            onClick={() => setEditing(true)}
+            aria-label={`Edit column ${column.title}`}
+            title="Edit column"
+          >
+            <svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor" aria-hidden>
+              <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04a.996.996 0 0 0 0-1.41l-2.34-2.34a.996.996 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z" />
+            </svg>
+          </button>
+        )}
       </header>
 
       <div className={styles.body} data-scroll data-over={cardOverHere ? "" : undefined}>
@@ -100,6 +105,7 @@ export const Column = memo(function Column({ column, membersById, onCardClick }:
                 card={card}
                 assignee={card.assigneeId ? membersById.get(card.assigneeId) : undefined}
                 onClick={onCardClick}
+                canEdit={canEdit}
               />
             ))
           )}

@@ -1,11 +1,14 @@
 // Board chooser. Shows only the boards the current user is a member of.
-// Creating a board also makes the creator a member (see useCreateBoard).
+// Creating a board makes the caller its owner (backend side, one transaction).
 // Rename yourself from the header (the backend's user-update endpoint).
+// Pending invitations addressed to the current user show up in a panel here —
+// the "main page" notification spot.
 
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useMyBoards } from "@/hooks/queries";
-import { useCreateBoard, useRenameUser } from "@/hooks/mutations";
+import { useBoards, usePendingInvitations } from "@/hooks/queries";
+import { useAcceptInvitation, useCreateBoard, useDeclineInvitation, useRenameUser } from "@/hooks/mutations";
+import { useNotifications } from "@/hooks/useNotifications";
 import { useCurrentUser } from "@/lib/currentUser";
 import { Avatar, Button, Dialog, Input, useToast } from "@/ui";
 import { SettingsMenu } from "@/features/settings/SettingsMenu";
@@ -16,7 +19,38 @@ export function BoardsPage() {
   const { toast } = useToast();
   const { user, setUser, logout } = useCurrentUser();
 
-  const { data: boards, isLoading, isError, error } = useMyBoards(user?.id);
+  const { data: boards, isLoading, isError, error } = useBoards();
+  useNotifications();
+
+  // --- invitations ---
+  const { data: invitations } = usePendingInvitations();
+  const acceptInvitation = useAcceptInvitation();
+  const declineInvitation = useDeclineInvitation();
+
+  const handleAccept = async (id: string, boardTitle: string) => {
+    try {
+      await acceptInvitation.mutateAsync(id);
+      toast({ title: `Joined “${boardTitle}”`, tone: "success" });
+    } catch (err) {
+      toast({
+        title: "Couldn't accept the invitation",
+        description: err instanceof Error ? err.message : undefined,
+        tone: "flare",
+      });
+    }
+  };
+
+  const handleDecline = async (id: string) => {
+    try {
+      await declineInvitation.mutateAsync(id);
+    } catch (err) {
+      toast({
+        title: "Couldn't decline the invitation",
+        description: err instanceof Error ? err.message : undefined,
+        tone: "flare",
+      });
+    }
+  };
 
   // --- create board ---
   const createBoard = useCreateBoard();
@@ -25,9 +59,9 @@ export function BoardsPage() {
 
   const handleCreate = async () => {
     const t = newTitle.trim();
-    if (!t || !user) return;
+    if (!t) return;
     try {
-      const created = await createBoard.mutateAsync({ title: t, userId: user.id });
+      const created = await createBoard.mutateAsync(t);
       toast({ title: "Board created", tone: "success" });
       setCreateOpen(false);
       setNewTitle("");
@@ -105,6 +139,29 @@ export function BoardsPage() {
           <SettingsMenu onLogout={handleLogout} />
         </div>
       </header>
+
+      {invitations && invitations.length > 0 && (
+        <section className={styles.invitations}>
+          <p className={styles.invitationsTitle}>Invitations</p>
+          <ul className={styles.invitationsList}>
+            {invitations.map((inv) => (
+              <li key={inv.id} className={styles.invitationRow}>
+                <span className={styles.invitationText}>
+                  <strong>{inv.invitedByName}</strong> invited you to <strong>{inv.boardTitle}</strong>
+                </span>
+                <div className={styles.invitationActions}>
+                  <Button size="sm" onClick={() => handleAccept(inv.id, inv.boardTitle)} disabled={acceptInvitation.isPending}>
+                    Accept
+                  </Button>
+                  <Button size="sm" variant="ghost" onClick={() => handleDecline(inv.id)} disabled={declineInvitation.isPending}>
+                    Decline
+                  </Button>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
 
       {isLoading && <p className={styles.note}>Loading boards…</p>}
       {isError && (

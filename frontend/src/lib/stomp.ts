@@ -93,6 +93,33 @@ export function subscribeBoard(
   };
 }
 
+/**
+ * Subscribe to the current user's private notification queue (board
+ * invitations, pushed live). Same bind-on-connect/rebind-on-reconnect
+ * semantics as subscribeBoard.
+ */
+export function subscribeNotifications(onMessage: (payload: unknown) => void): () => void {
+  getClient();
+  const entry: Entry = {
+    topic: "/user/queue/notifications",
+    onFrame: (frame) => {
+      try {
+        onMessage(JSON.parse(frame.body));
+      } catch {
+        /* ignore malformed frames */
+      }
+    },
+    sub: null,
+  };
+  entries.add(entry);
+  bind(entry);
+
+  return () => {
+    entry.sub?.unsubscribe();
+    entries.delete(entry);
+  };
+}
+
 /** Observe connection status. Fires immediately with the current value. */
 export function subscribeConnection(cb: (connected: boolean) => void): () => void {
   statusListeners.add(cb);

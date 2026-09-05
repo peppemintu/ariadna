@@ -16,7 +16,7 @@ import type { SaveState } from "@/ui";
 import { useAssignCard, useDeleteCard, useUpdateCard } from "@/hooks/mutations";
 import { ApiError } from "@/api/http";
 import { fromDatetimeLocalValue, toDatetimeLocalValue } from "@/lib/format";
-import type { CardResponse, UserResponse, UUID } from "@/api/types";
+import type { CardResponse, BoardMember, UUID } from "@/api/types";
 import styles from "./CardDetail.module.css";
 
 const UNASSIGNED = "__unassigned__";
@@ -25,7 +25,8 @@ const AUTOSAVE_MS = 1200;
 interface CardDetailProps {
   card: CardResponse | null;
   boardId: UUID;
-  members: UserResponse[];
+  members: BoardMember[];
+  canEdit: boolean;
   onClose: () => void;
 }
 
@@ -36,7 +37,7 @@ interface Snapshot {
   assignee: string | null;
 }
 
-export function CardDetail({ card, boardId, members, onClose }: CardDetailProps) {
+export function CardDetail({ card, boardId, members, canEdit, onClose }: CardDetailProps) {
   const { toast } = useToast();
   const update = useUpdateCard(boardId);
   const assign = useAssignCard(boardId);
@@ -112,7 +113,7 @@ export function CardDetail({ card, boardId, members, onClose }: CardDetailProps)
   };
 
   const doAutosave = async (): Promise<boolean> => {
-    if (!card || savingRef.current) return true;
+    if (!canEdit || !card || savingRef.current) return true;
     const d = computeDirty();
     if (!d.dirty) {
       setStatus("saved");
@@ -171,7 +172,7 @@ export function CardDetail({ card, boardId, members, onClose }: CardDetailProps)
 
   // Debounced autosave on any field change.
   useEffect(() => {
-    if (!card) return;
+    if (!canEdit || !card) return;
     const d = computeDirty();
     if (!d.dirty) {
       if (!savingRef.current) setStatus("saved");
@@ -183,9 +184,13 @@ export function CardDetail({ card, boardId, members, onClose }: CardDetailProps)
       if (timerRef.current) clearTimeout(timerRef.current);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [title, description, deadline, assigneeId, card]);
+  }, [title, description, deadline, assigneeId, card, canEdit]);
 
   const requestClose = async () => {
+    if (!canEdit) {
+      onClose();
+      return;
+    }
     if (timerRef.current) clearTimeout(timerRef.current);
     const d = computeDirty();
     if (!d.dirty) {
@@ -234,9 +239,11 @@ export function CardDetail({ card, boardId, members, onClose }: CardDetailProps)
         width={560}
         footer={
           <div className={styles.footer}>
-            <Button variant="ghost" size="sm" onClick={() => setConfirmDeleteOpen(true)}>
-              Delete
-            </Button>
+            {canEdit && (
+              <Button variant="ghost" size="sm" onClick={() => setConfirmDeleteOpen(true)}>
+                Delete
+              </Button>
+            )}
             <div className={styles.spacer} />
             <SaveIndicator state={status} />
             <Button variant="ghost" onClick={() => void requestClose()}>
@@ -246,12 +253,12 @@ export function CardDetail({ card, boardId, members, onClose }: CardDetailProps)
         }
       >
         <div className={styles.form}>
-          <Input label="Title" value={title} onChange={(e) => setTitle(e.target.value)} />
+          <Input label="Title" value={title} onChange={(e) => setTitle(e.target.value)} disabled={!canEdit} />
           <RichTextEditor
             label="Description"
             value={description}
             onChange={setDescription}
-            defaultMode="preview"
+            defaultMode={canEdit ? "write" : "preview"}
             placeholder="Add more detail… links, lists and formatting supported"
           />
           <div className={styles.row}>
@@ -262,10 +269,17 @@ export function CardDetail({ card, boardId, members, onClose }: CardDetailProps)
                 className={styles.dateInput}
                 value={deadline}
                 onChange={(e) => setDeadline(e.target.value)}
+                disabled={!canEdit}
               />
             </div>
             <div className={styles.col}>
-              <Select label="Assignee" value={assigneeId} onChange={setAssigneeId} options={assigneeOptions} />
+              <Select
+                label="Assignee"
+                value={assigneeId}
+                onChange={setAssigneeId}
+                options={assigneeOptions}
+                disabled={!canEdit}
+              />
             </div>
           </div>
         </div>

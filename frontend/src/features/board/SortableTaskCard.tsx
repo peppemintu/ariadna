@@ -5,22 +5,23 @@
 import { memo } from "react";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import type { CardResponse, UserResponse } from "@/api/types";
+import type { CardResponse, BoardMember } from "@/api/types";
 import { isOptimisticId } from "@/hooks/mutations";
 import { TaskCard } from "./TaskCard";
 
 interface Props {
   card: CardResponse;
-  assignee?: UserResponse;
+  assignee?: BoardMember;
   onClick?: (card: CardResponse) => void;
+  canEdit: boolean;
 }
 
-export const SortableTaskCard = memo(function SortableTaskCard({ card, assignee, onClick }: Props) {
+export const SortableTaskCard = memo(function SortableTaskCard({ card, assignee, onClick, canEdit }: Props) {
   const optimistic = isOptimisticId(card.id);
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: card.id,
     data: { type: "card" },
-    disabled: optimistic,
+    disabled: optimistic || !canEdit,
   });
 
   return (

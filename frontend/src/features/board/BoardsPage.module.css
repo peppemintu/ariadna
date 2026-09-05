@@ -26,6 +26,27 @@
 .note { color: var(--text-muted); font-size: var(--text-sm); }
 .error { color: var(--flare-700); font-size: var(--text-sm); }
 
+.invitations {
+  margin-bottom: var(--space-8);
+  padding: var(--space-4) var(--space-5);
+  background: var(--surface-card);
+  border: var(--border-line) solid var(--ink-900);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+}
+.invitationsTitle {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: var(--space-3);
+}
+.invitationsList { list-style: none; display: flex; flex-direction: column; gap: var(--space-3); }
+.invitationRow { display: flex; align-items: center; justify-content: space-between; gap: var(--space-4); }
+.invitationText { font-family: var(--font-body); font-size: var(--text-sm); color: var(--ink-700); }
+.invitationActions { display: flex; gap: var(--space-2); flex-shrink: 0; }
+
 .grid { list-style: none; display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: var(--space-4); }
 .card {
   display: flex;

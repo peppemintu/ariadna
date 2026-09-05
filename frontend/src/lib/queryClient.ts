@@ -14,8 +14,10 @@ export const queryClient = new QueryClient({
 export const qk = {
   users: ["users"] as const,
   boards: ["boards"] as const,
-  boardsByUser: (userId: string) => ["boards", "user", userId] as const,
   board: (id: string) => ["board", id] as const,
   boardFull: (id: string) => ["board", id, "full"] as const,
   activity: (id: string) => ["board", id, "activity"] as const,
+  boardRoles: ["boardRoles"] as const,
+  invitations: ["invitations", "mine"] as const,
+  boardInvitations: (boardId: string) => ["board", boardId, "invitations"] as const,
 };
