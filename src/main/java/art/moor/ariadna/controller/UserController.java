@@ -31,6 +31,7 @@ public class UserController {
 
     @GetMapping("/{id}")
     public UserResponseDto getById(@PathVariable UUID id) {
+        userAccessGuard.checkCanAccess(id);
         return userService.getById(id);
     }
 

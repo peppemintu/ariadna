@@ -1,6 +1,8 @@
 package art.moor.ariadna.exception.handler;
 
+import art.moor.ariadna.exception.InvalidRefreshTokenException;
 import art.moor.ariadna.exception.ResourceNotFoundException;
+import art.moor.ariadna.exception.TooManyRequestsException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.http.HttpStatus;
@@ -35,6 +37,20 @@ public class GlobalExceptionHandler {
     public ProblemDetail handle401(AuthenticationException ex) {
         ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(HttpStatus.UNAUTHORIZED, "Invalid email or password");
         problemDetail.setTitle("Unauthorized");
+        return problemDetail;
+    }
+
+    @ExceptionHandler(InvalidRefreshTokenException.class)
+    public ProblemDetail handle401Refresh(InvalidRefreshTokenException ex) {
+        ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(HttpStatus.UNAUTHORIZED, ex.getMessage());
+        problemDetail.setTitle("Unauthorized");
+        return problemDetail;
+    }
+
+    @ExceptionHandler(TooManyRequestsException.class)
+    public ProblemDetail handle429(TooManyRequestsException ex) {
+        ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(HttpStatus.TOO_MANY_REQUESTS, ex.getMessage());
+        problemDetail.setTitle("Too many requests");
         return problemDetail;
     }
 

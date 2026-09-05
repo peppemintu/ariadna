@@ -23,10 +23,6 @@ public class JwtService {
         return createToken(userDetails.getUsername(), jwtProperties.accessTokenExpiration());
     }
 
-    public String generateRefreshToken(UserDetails userDetails) {
-        return createToken(userDetails.getUsername(), jwtProperties.refreshTokenExpiration());
-    }
-
     private String createToken(String subject, Duration expirationTime) {
         return Jwts.builder()
                 .signWith(getSignInKey(), Jwts.SIG.HS256)
