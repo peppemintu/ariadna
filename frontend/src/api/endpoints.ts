@@ -29,6 +29,11 @@ import type {
 export const authApi = {
   login: (b: LoginRequest) => http.post<AuthResponse>("/api/auth/login", b),
   register: (b: UserCreateRequest) => http.post<UserResponse>("/api/auth/register", b),
+  // Exchanges the httpOnly refresh cookie for a new access token; used on app
+  // bootstrap to restore a session across reloads. http.ts also calls this
+  // internally to silently retry a request once the access token has expired.
+  refresh: () => http.post<AuthResponse>("/api/auth/refresh"),
+  logout: () => http.post<void>("/api/auth/logout"),
 };
 
 export const usersApi = {

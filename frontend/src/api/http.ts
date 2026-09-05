@@ -1,10 +1,17 @@
 // Thin fetch wrapper. Everything goes through here so error handling — the 409
-// optimistic-lock conflict AND auth (Bearer token + session expiry) — lives in
-// one place.
+// optimistic-lock conflict AND auth (Bearer token + silent refresh + session
+// expiry) — lives in one place.
 
-import { getToken, clearToken, notifySessionExpired } from "@/lib/auth";
+import { getToken, setToken, clearToken, notifySessionExpired } from "@/lib/auth";
+import type { AuthResponse } from "./types";
 
 const BASE = import.meta.env.VITE_API_BASE ?? ""; // "" => same-origin (Vite proxy)
+
+// These carry their own success/failure handling at the call site (LoginPage,
+// currentUser's bootstrap/login/logout) — a 401/403 from one of them must
+// never trigger a silent-refresh retry (refreshing a bad refresh token, or
+// retrying a rejected login, makes no sense and risks a request loop).
+const NO_RETRY_PATHS = ["/api/auth/login", "/api/auth/register", "/api/auth/refresh", "/api/auth/logout"];
 
 export class ApiError extends Error {
   constructor(
@@ -28,7 +35,31 @@ export class ApiError extends Error {
   }
 }
 
-async function request<T>(method: string, path: string, body?: unknown): Promise<T> {
+// Exchanges the httpOnly refresh cookie for a new access token. Deduped so
+// several requests failing at once (e.g. a batch of parallel queries right
+// after the access token expires) only trigger one /refresh call.
+let refreshInFlight: Promise<string | null> | null = null;
+
+function refreshAccessToken(): Promise<string | null> {
+  if (!refreshInFlight) {
+    refreshInFlight = fetch(BASE + "/api/auth/refresh", {
+      method: "POST",
+      credentials: "include",
+    })
+      .then(async (res) => {
+        if (!res.ok) return null;
+        const data = (await res.json()) as AuthResponse;
+        return data.accessToken;
+      })
+      .catch(() => null)
+      .finally(() => {
+        refreshInFlight = null;
+      });
+  }
+  return refreshInFlight;
+}
+
+async function request<T>(method: string, path: string, body?: unknown, isRetry = false): Promise<T> {
   const token = getToken();
   const headers: Record<string, string> = {};
   if (body !== undefined) headers["Content-Type"] = "application/json";
@@ -38,9 +69,22 @@ async function request<T>(method: string, path: string, body?: unknown): Promise
     method,
     headers: Object.keys(headers).length ? headers : undefined,
     body: body !== undefined ? JSON.stringify(body) : undefined,
+    // Needed so the browser sends/receives the httpOnly refresh-token cookie.
+    credentials: "include",
   });
 
   if (!res.ok) {
+    const isAuthFailure = res.status === 401 || res.status === 403;
+    const isRetryableEndpoint = !NO_RETRY_PATHS.includes(path);
+
+    if (isAuthFailure && isRetryableEndpoint && !isRetry) {
+      const newToken = await refreshAccessToken();
+      if (newToken) {
+        setToken(newToken);
+        return request<T>(method, path, body, true);
+      }
+    }
+
     let parsed: unknown;
     const text = await res.text();
     try {
@@ -53,10 +97,9 @@ async function request<T>(method: string, path: string, body?: unknown): Promise
         ? String((parsed as { message: unknown }).message)
         : undefined) ?? `${method} ${path} failed (${res.status})`;
 
-    // A 401/403 on an authenticated request means the session is gone — but the
-    // login/register calls carry no token and their 401 (bad password) must NOT
-    // trigger a global logout.
-    if ((res.status === 401 || res.status === 403) && token) {
+    // Bad credentials on login/register, or a failed refresh/logout, are
+    // handled by their own callers and must not trigger a global logout.
+    if (isAuthFailure && isRetryableEndpoint) {
       clearToken();
       notifySessionExpired();
     }
