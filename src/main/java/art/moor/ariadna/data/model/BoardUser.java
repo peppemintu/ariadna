@@ -4,6 +4,8 @@ import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.UuidGenerator;
 
+import java.util.HashSet;
+import java.util.Set;
 import java.util.UUID;
 
 @Entity
@@ -27,5 +29,12 @@ public class BoardUser {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
+
+    @ElementCollection(targetClass = BoardPermission.class, fetch = FetchType.EAGER)
+    @CollectionTable(name = "board_user_permission", joinColumns = @JoinColumn(name = "board_user_id"))
+    @Enumerated(EnumType.STRING)
+    @Column(name = "permission")
+    @Builder.Default
+    private Set<BoardPermission> permissions = new HashSet<>();
 
 }

@@ -1,8 +1,10 @@
 package art.moor.ariadna.service;
 
+import art.moor.ariadna.data.dto.invitation.InvitationResponseDto;
 import art.moor.ariadna.data.dto.ws.BoardMessage;
 import art.moor.ariadna.data.event.ActivityEvent;
 import art.moor.ariadna.data.event.BoardEvent;
+import art.moor.ariadna.data.event.InvitationEvent;
 import art.moor.ariadna.data.model.ActionType;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
@@ -37,5 +39,9 @@ public class EventPublisher {
                 action,
                 payload
         ));
+    }
+
+    public void publishInvitationEvent(String invitedEmail, InvitationResponseDto invitation) {
+        eventPublisher.publishEvent(new InvitationEvent(invitedEmail, invitation));
     }
 }

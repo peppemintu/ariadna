@@ -3,6 +3,7 @@ package art.moor.ariadna.controller;
 import art.moor.ariadna.data.dto.activity.ActivityResponseDto;
 import art.moor.ariadna.service.ActivityService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RestController;
@@ -16,6 +17,7 @@ public class ActivityController {
 
     private final ActivityService activityService;
 
+    @PreAuthorize("hasPermission(#boardId, 'BOARD', 'READ')")
     @GetMapping("/api/board/{boardId}/activity")
     public List<ActivityResponseDto> getByBoard(@PathVariable UUID boardId) {
         return activityService.getByBoard(boardId);

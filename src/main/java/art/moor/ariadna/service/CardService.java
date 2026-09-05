@@ -1,10 +1,12 @@
 package art.moor.ariadna.service;
 
+import art.moor.ariadna.config.security.BoardAccessGuard;
 import art.moor.ariadna.data.dto.card.CardCreateDto;
 import art.moor.ariadna.data.dto.card.CardMoveDto;
 import art.moor.ariadna.data.dto.card.CardResponseDto;
 import art.moor.ariadna.data.dto.card.CardUpdateDto;
 import art.moor.ariadna.data.model.ActionType;
+import art.moor.ariadna.data.model.BoardPermission;
 import art.moor.ariadna.exception.BoardColumnNotFoundException;
 import art.moor.ariadna.exception.BoardUserNotFoundException;
 import art.moor.ariadna.exception.CardNotFoundException;
@@ -36,15 +38,16 @@ public class CardService {
     private final BoardColumnRepository boardColumnRepository;
     private final BoardUserRepository boardUserRepository;
     private final CardMapper cardMapper;
+    private final BoardAccessGuard boardAccessGuard;
 
     private final EventPublisher eventPublisher;
 
     public CardResponseDto create(UUID columnId, CardCreateDto dto) {
         BoardColumn column = boardColumnRepository.findById(columnId)
                 .orElseThrow(() -> new BoardColumnNotFoundException(columnId));
-        double maxPos = cardRepository.findMaxPositionByColumnId(columnId).orElse(0.0);
-
         UUID boardId = column.getBoard().getId();
+        boardAccessGuard.requirePermission(boardId, BoardPermission.EDIT_CARDS);
+        double maxPos = cardRepository.findMaxPositionByColumnId(columnId).orElse(0.0);
 
         Card card = cardMapper.fromCreate(dto);
         card.setBoard(column.getBoard());
@@ -74,17 +77,23 @@ public class CardService {
 
     @Transactional(readOnly = true)
     public CardResponseDto getById(UUID id) {
-        return cardMapper.toDto(getCard(id));
+        Card card = getCard(id);
+        boardAccessGuard.requireMember(card.getBoard().getId());
+        return cardMapper.toDto(card);
     }
 
     @Transactional(readOnly = true)
     public List<CardResponseDto> getByColumn(UUID columnId) {
+        BoardColumn column = boardColumnRepository.findById(columnId)
+                .orElseThrow(() -> new BoardColumnNotFoundException(columnId));
+        boardAccessGuard.requireMember(column.getBoard().getId());
         return cardRepository.findByColumnIdOrderByPositionAscIdAsc(columnId)
                 .stream().map(cardMapper::toDto).toList();
     }
 
     public CardResponseDto update(UUID id, CardUpdateDto dto) {
         Card card = getCard(id);
+        boardAccessGuard.requirePermission(card.getBoard().getId(), BoardPermission.EDIT_CARDS);
 
         if (card.getVersion() != dto.version()) {
             throw new ObjectOptimisticLockingFailureException(Card.class, id);
@@ -113,6 +122,7 @@ public class CardService {
 
     public CardResponseDto assign(UUID id, UUID assigneeId) {
         Card card = getCard(id);
+        boardAccessGuard.requirePermission(card.getBoard().getId(), BoardPermission.EDIT_CARDS);
         card.setAssignee(
                 assigneeId == null ? null : resolveAssignee(assigneeId, card.getBoard().getId())
         );
@@ -140,6 +150,7 @@ public class CardService {
     public void delete(UUID id) {
         Card card = getCard(id);
         UUID boardId = card.getBoard().getId();
+        boardAccessGuard.requirePermission(boardId, BoardPermission.EDIT_CARDS);
 
         cardRepository.delete(card);
 
@@ -159,6 +170,7 @@ public class CardService {
 
     public CardResponseDto move(UUID id, CardMoveDto cardMoveDto) {
         Card card = getCard(id);
+        boardAccessGuard.requirePermission(card.getBoard().getId(), BoardPermission.EDIT_CARDS);
 
         if (card.getVersion() != cardMoveDto.version()) {
             throw new ObjectOptimisticLockingFailureException(Card.class, id);

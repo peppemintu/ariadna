@@ -8,6 +8,7 @@ import art.moor.ariadna.service.BoardColumnService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.util.UriComponentsBuilder;
 
@@ -21,6 +22,7 @@ public class BoardColumnController {
 
     private final BoardColumnService boardColumnService;
 
+    @PreAuthorize("hasPermission(#boardId, 'BOARD', 'EDIT_CARDS')")
     @PostMapping("/api/board/{boardId}/column")
     public ResponseEntity<BoardColumnResponseDto> create(
             @PathVariable UUID boardId,
@@ -32,11 +34,14 @@ public class BoardColumnController {
         return ResponseEntity.created(location).body(created);
     }
 
+    @PreAuthorize("hasPermission(#boardId, 'BOARD', 'READ')")
     @GetMapping("/api/board/{boardId}/column")
     public List<BoardColumnResponseDto> getByBoard(@PathVariable UUID boardId) {
         return boardColumnService.getByBoard(boardId);
     }
 
+    // The column's own id is in the path here, not the board's — permission is
+    // checked inside the service after the column (and its board) is loaded.
     @GetMapping("/api/column/{id}")
     public BoardColumnResponseDto getById(@PathVariable UUID id) {
         return boardColumnService.getById(id);

@@ -1,8 +1,10 @@
 package art.moor.ariadna.exception.handler;
 
 import art.moor.ariadna.exception.InvalidRefreshTokenException;
+import art.moor.ariadna.exception.InvitationAlreadyPendingException;
 import art.moor.ariadna.exception.ResourceNotFoundException;
 import art.moor.ariadna.exception.TooManyRequestsException;
+import art.moor.ariadna.exception.UserAlreadyMemberException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.http.HttpStatus;
@@ -72,6 +74,13 @@ public class GlobalExceptionHandler {
     public ProblemDetail handle409(OptimisticLockingFailureException ex) {
         ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, ex.getMessage());
         problemDetail.setTitle("Resource was modified by someone else. Reload and try again.");
+        return problemDetail;
+    }
+
+    @ExceptionHandler({UserAlreadyMemberException.class, InvitationAlreadyPendingException.class})
+    public ProblemDetail handle409Invitation(RuntimeException ex) {
+        ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, ex.getMessage());
+        problemDetail.setTitle("Conflict");
         return problemDetail;
     }
 

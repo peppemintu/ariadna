@@ -1,10 +1,12 @@
 package art.moor.ariadna.service;
 
+import art.moor.ariadna.config.security.BoardAccessGuard;
 import art.moor.ariadna.data.dto.boardColumn.BoardColumnCreateDto;
 import art.moor.ariadna.data.dto.boardColumn.BoardColumnMoveDto;
 import art.moor.ariadna.data.dto.boardColumn.BoardColumnResponseDto;
 import art.moor.ariadna.data.dto.boardColumn.BoardColumnUpdateDto;
 import art.moor.ariadna.data.model.ActionType;
+import art.moor.ariadna.data.model.BoardPermission;
 import art.moor.ariadna.exception.BoardColumnNotFoundException;
 import art.moor.ariadna.exception.BoardNotFoundException;
 import art.moor.ariadna.mapper.BoardColumnMapper;
@@ -34,6 +36,7 @@ public class BoardColumnService {
     private final BoardRepository boardRepository;
     private final CardRepository cardRepository;
     private final BoardColumnMapper boardColumnMapper;
+    private final BoardAccessGuard boardAccessGuard;
 
     private final EventPublisher eventPublisher;
 
@@ -66,7 +69,9 @@ public class BoardColumnService {
 
     @Transactional(readOnly = true)
     public BoardColumnResponseDto getById(UUID id) {
-        return boardColumnMapper.toDto(getColumn(id));
+        BoardColumn column = getColumn(id);
+        boardAccessGuard.requireMember(column.getBoard().getId());
+        return boardColumnMapper.toDto(column);
     }
 
     @Transactional(readOnly = true)
@@ -77,6 +82,7 @@ public class BoardColumnService {
 
     public BoardColumnResponseDto update(UUID id, BoardColumnUpdateDto dto) {
         BoardColumn column = getColumn(id);
+        boardAccessGuard.requirePermission(column.getBoard().getId(), BoardPermission.EDIT_CARDS);
         boardColumnMapper.updateEntity(dto, column);
         BoardColumn savedColumn = boardColumnRepository.save(column);
         BoardColumnResponseDto response = boardColumnMapper.toDto(savedColumn);
@@ -101,6 +107,7 @@ public class BoardColumnService {
     public void delete(UUID id) {
         BoardColumn column = getColumn(id);
         UUID boardId = column.getBoard().getId();
+        boardAccessGuard.requirePermission(boardId, BoardPermission.EDIT_CARDS);
 
         //IdAsc для того, если два пользователя перетаскивают две разные карточки на одну позицию - тайбрейкер
         List<Card> cards = cardRepository.findByColumnIdOrderByPositionAscIdAsc(id);
@@ -123,6 +130,7 @@ public class BoardColumnService {
 
     public BoardColumnResponseDto move(UUID id, BoardColumnMoveDto columnMoveDto) {
         BoardColumn column = getColumn(id);
+        boardAccessGuard.requirePermission(column.getBoard().getId(), BoardPermission.EDIT_CARDS);
 
         if (column.getVersion() != columnMoveDto.version()) {
             throw new ObjectOptimisticLockingFailureException(Card.class, id);

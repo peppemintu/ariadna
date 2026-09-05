@@ -3,12 +3,8 @@ package art.moor.ariadna.data.dto.boardUser;
 import art.moor.ariadna.data.model.BoardPermission;
 
 import java.util.Set;
-import java.util.UUID;
 
-public record BoardUserResponseDto(
-        UUID id,
-        UUID boardId,
-        UUID userId,
-        boolean owner,
+public record BoardRoleDto(
+        String name,
         Set<BoardPermission> permissions
 ) {}

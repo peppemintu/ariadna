@@ -27,26 +27,32 @@ public class BoardUserRepositoryTest extends IntegrationTestBase {
     @Autowired
     private BoardUserRepository boardUserRepository;
 
+    private User newUser(String email) {
+        User user = new User();
+        user.setEmail(email);
+        user.setPasswordHash("$2y$10$wlt/n1Gr5zE15Du10YF1v.ULRZsnW9e67nGM4dAupUQRfxDJ.evBS");
+        user.setName("user");
+        user.setRole(UserRole.ADMIN);
+        return userRepository.save(user);
+    }
+
     @Test
     void findByIdAndBoardId_assigneeFromAnotherBoard_returnsEmptyOptional() {
+        User owner = newUser("test@email.com");
+
         Board boardA = new Board();
         boardA.setTitle("Board A");
+        boardA.setOwner(owner);
         Board savedBoardA = boardRepository.save(boardA);
 
         Board boardB = new Board();
         boardB.setTitle("Board B");
+        boardB.setOwner(owner);
         Board savedBoardB = boardRepository.save(boardB);
-
-        User user = new User();
-        user.setEmail("test@email.com");
-        user.setPasswordHash("$2y$10$wlt/n1Gr5zE15Du10YF1v.ULRZsnW9e67nGM4dAupUQRfxDJ.evBS");
-        user.setName("user");
-        user.setRole(UserRole.ADMIN);
-        User savedUser = userRepository.save(user);
 
         BoardUser boardUser = new BoardUser();
         boardUser.setBoard(savedBoardB);
-        boardUser.setUser(savedUser);
+        boardUser.setUser(owner);
         BoardUser savedBoardUser = boardUserRepository.save(boardUser);
 
         Optional<BoardUser> assignee =
@@ -57,20 +63,16 @@ public class BoardUserRepositoryTest extends IntegrationTestBase {
 
     @Test
     void findByIdAndBoardId_assigneeFromSameBoard_returnsBoardUser() {
+        User owner = newUser("same@email.com");
+
         Board board = new Board();
         board.setTitle("Board A");
+        board.setOwner(owner);
         Board savedBoard = boardRepository.save(board);
-
-        User user = new User();
-        user.setEmail("same@email.com");
-        user.setPasswordHash("$2y$10$wlt/n1Gr5zE15Du10YF1v.ULRZsnW9e67nGM4dAupUQRfxDJ.evBS");
-        user.setName("user");
-        user.setRole(UserRole.ADMIN);
-        User savedUser = userRepository.save(user);
 
         BoardUser boardUser = new BoardUser();
         boardUser.setBoard(savedBoard);
-        boardUser.setUser(savedUser);
+        boardUser.setUser(owner);
         BoardUser saved = boardUserRepository.save(boardUser);
 
         Optional<BoardUser> found =

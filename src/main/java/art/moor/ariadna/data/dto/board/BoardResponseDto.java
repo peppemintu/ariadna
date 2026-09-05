@@ -6,6 +6,8 @@ import java.util.UUID;
 public record BoardResponseDto (
         UUID id,
         String title,
+        UUID ownerId,
         Instant createdAt,
-        Instant updatedAt
+        Instant updatedAt,
+        BoardMyAccessDto myAccess
 ) {}

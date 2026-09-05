@@ -3,49 +3,45 @@ package art.moor.ariadna.data.model;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
-import org.hibernate.annotations.UpdateTimestamp;
 import org.hibernate.annotations.UuidGenerator;
 
 import java.time.Instant;
-import java.util.HashSet;
-import java.util.Set;
 import java.util.UUID;
 
 @Entity
-@Table
+@Table(name = "board_invitation")
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
 @Getter
 @Setter
 @EqualsAndHashCode(of = {"id"})
-public class Board {
+public class BoardInvitation {
 
     @Id
     @UuidGenerator(style = UuidGenerator.Style.VERSION_7)
     @Column(updatable = false, nullable = false)
     private UUID id;
 
-    @Column(nullable = false)
-    private String title;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "board_id", nullable = false)
+    private Board board;
+
+    @Column(name = "invited_email", nullable = false, length = 100)
+    private String invitedEmail;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "owner_id", nullable = false)
-    private User owner;
+    @JoinColumn(name = "invited_by_id", nullable = false)
+    private User invitedBy;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20)
+    private InvitationStatus status;
 
     @CreationTimestamp
     @Column(name = "created_at", updatable = false, nullable = false)
     private Instant createdAt;
 
-    @UpdateTimestamp
-    @Column(name = "updated_at", nullable = false)
-    private Instant updatedAt;
-
-    @OneToMany(
-            mappedBy = "board",
-            cascade = CascadeType.ALL,
-            orphanRemoval = true
-    )
-    private Set<BoardUser> boardUsers = new HashSet<>();
-
+    @Column(name = "responded_at")
+    private Instant respondedAt;
 }

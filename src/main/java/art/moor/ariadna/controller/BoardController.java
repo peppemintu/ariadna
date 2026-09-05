@@ -7,6 +7,7 @@ import art.moor.ariadna.service.BoardService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.util.UriComponentsBuilder;
 
@@ -31,27 +32,32 @@ public class BoardController {
         return ResponseEntity.created(location).body(created);
     }
 
+    @PreAuthorize("hasPermission(#id, 'BOARD', 'READ')")
     @GetMapping("/{id}")
     public BoardResponseDto getById(@PathVariable UUID id) {
         return boardService.getById(id);
     }
 
+    @PreAuthorize("hasPermission(#id, 'BOARD', 'READ')")
     @GetMapping("/{id}/full")
     public BoardFullDto getFullBoardById(@PathVariable UUID id) {
         return boardService.getFullBoardById(id);
     }
 
+    /** Only boards the caller is a member of — see BoardService.getAll. */
     @GetMapping
     public List<BoardResponseDto> getAll() {
         return boardService.getAll();
     }
 
+    @PreAuthorize("hasPermission(#id, 'BOARD', 'EDIT_CARDS')")
     @PutMapping("/{id}")
     public BoardResponseDto update(@PathVariable UUID id,
                                    @Valid @RequestBody BoardRequestDto request) {
         return boardService.update(id, request);
     }
 
+    @PreAuthorize("hasPermission(#id, 'BOARD', 'OWNER')")
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(@PathVariable UUID id) {
         boardService.delete(id);
